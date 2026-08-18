@@ -6,11 +6,15 @@ import { ArrowLeft, ImagePlus, Save } from "lucide-react";
 import { fabricInputSchema } from "@/schemas/fabric";
 import { useWorkspace } from "@/features/workspace/workspace-store";
 import { Button, ButtonLink, Field, PageHeading } from "@/components/ui/primitives";
+import { useCurrentUser } from "@/features/auth/current-user-context";
+import { can } from "@/lib/permissions";
 
 const usesSupabase = process.env.NEXT_PUBLIC_APP_MODE === "supabase";
 
 export function FabricForm() {
+  const user = useCurrentUser();
   const router = useRouter(); const addFabric = useWorkspace((state) => state.addFabric); const [errors, setErrors] = useState<Record<string,string>>({}); const [pending, setPending] = useState(false); const [files, setFiles] = useState<File[]>([]);
+  if (!can(user.role, "fabric:create")) return <div className="empty-state" role="alert"><h1 className="font-display text-3xl">Недостаточно прав</h1><p className="muted mt-2 text-sm">Создание тканей недоступно для вашей роли.</p><ButtonLink href="/fabrics" className="mt-5">Вернуться в каталог</ButtonLink></div>;
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); const raw = Object.fromEntries(new FormData(event.currentTarget)); const result = fabricInputSchema.safeParse(raw);
     if (!result.success) { setErrors(Object.fromEntries(result.error.issues.map((issue) => [String(issue.path[0]), issue.message]))); return; }

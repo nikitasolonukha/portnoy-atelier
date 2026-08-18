@@ -7,14 +7,17 @@ import { filterFabrics, sortFabrics, type CatalogSort } from "@/lib/catalog";
 import { formatMoney } from "@/lib/utils";
 import { ButtonLink, PageHeading } from "@/components/ui/primitives";
 import { useWorkspace } from "@/features/workspace/workspace-store";
+import { useCurrentUser } from "@/features/auth/current-user-context";
+import { can } from "@/lib/permissions";
 
 export function FabricsCatalog() {
+  const user = useCurrentUser();
   const fabrics = useWorkspace((state) => state.fabrics);
   const [query, setQuery] = useState(""); const [color, setColor] = useState(""); const [pattern, setPattern] = useState(""); const [status, setStatus] = useState<"active"|"archived"|"all">("active"); const [sort, setSort] = useState<CatalogSort>("name-asc"); const [view, setView] = useState<"grid"|"list">("grid");
   const colors = [...new Set(fabrics.map((f) => f.mainColor))].filter(Boolean); const patterns = [...new Set(fabrics.map((f) => f.pattern))].filter(Boolean);
   const visible = useMemo(() => sortFabrics(filterFabrics(fabrics, { query, color, pattern, status }), sort), [fabrics, query, color, pattern, status, sort]);
   return <div className="space-y-8">
-    <PageHeading eyebrow="Материалы" title="Каталог тканей" description={`${visible.length} из ${fabrics.length} образцов в текущей базе.`} actions={<><ButtonLink href="/fabrics/import" variant="secondary"><Upload size={17} /> Импорт</ButtonLink><ButtonLink href="/fabrics/new"><Plus size={17} /> Добавить ткань</ButtonLink></>} />
+    <PageHeading eyebrow="Материалы" title="Каталог тканей" description={`${visible.length} из ${fabrics.length} образцов в текущей базе.`} actions={<>{can(user.role, "fabric:import") && <ButtonLink href="/fabrics/import" variant="secondary"><Upload size={17} /> Импорт</ButtonLink>}{can(user.role, "fabric:create") && <ButtonLink href="/fabrics/new"><Plus size={17} /> Добавить ткань</ButtonLink>}</>} />
     <section className="surface p-3" aria-label="Поиск и фильтры"><div className="grid gap-2 md:grid-cols-[minmax(240px,1fr)_160px_160px_150px_auto]">
       <label className="relative"><span className="sr-only">Поиск тканей</span><Search className="absolute left-3 top-3.5 text-[#77736b]" size={18} aria-hidden="true" /><input className="input pl-10" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Артикул, название, фабрика" /></label>
       <label><span className="sr-only">Цвет</span><select className="select" value={color} onChange={(e) => setColor(e.target.value)}><option value="">Все цвета</option>{colors.map((item) => <option key={item}>{item}</option>)}</select></label>

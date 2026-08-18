@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Archive, ChevronDown, LayoutDashboard, Menu, Scissors, Settings2, SwatchBook, X } from "lucide-react";
+import { Archive, ChevronDown, LayoutDashboard, Menu, Settings2, SwatchBook, X } from "lucide-react";
+import { CurrentUserProvider } from "@/features/auth/current-user-context";
+import { LogoutButton } from "@/features/auth/logout-button";
+import type { CurrentUser } from "@/types/auth";
 
 const items = [
   { href: "/dashboard", label: "Обзор", icon: LayoutDashboard },
@@ -12,10 +15,14 @@ const items = [
   { href: "/configurations", label: "Конфигурации", icon: Archive },
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase("ru")).join("") || "П";
+}
+
+export function AppShell({ children, user }: { children: React.ReactNode; user: CurrentUser }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  return <div className="app-grid">
+  return <CurrentUserProvider user={user}><div className="app-grid">
     {open && <button className="fixed inset-0 z-20 bg-black/35 lg:hidden" aria-label="Закрыть меню" onClick={() => setOpen(false)} />}
     <aside className="sidebar" data-open={open} aria-label="Основная навигация">
       <div className="mb-9 flex items-center justify-between gap-3">
@@ -29,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </nav>
       <div className="mt-auto border-t border-[#3b413c] pt-5">
         <div className="mb-4 flex items-center gap-2 px-3 text-xs text-[#b8b9b4]"><span className="status-dot" /> {process.env.NEXT_PUBLIC_APP_MODE === "supabase" ? "Supabase подключён" : "Демо-база активна"}</div>
-        <Link href="/login" className="nav-link"><Scissors size={18} aria-hidden="true" /><span>Выйти</span></Link>
+        <LogoutButton />
       </div>
     </aside>
     <main className="page-shell">
@@ -38,9 +45,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button className="icon-button lg:hidden" aria-label="Открыть меню" onClick={() => setOpen(true)}><Menu size={20} /></button>
           <p className="hidden text-sm font-bold sm:block">Рабочее пространство ателье</p>
         </div>
-        <button className="button button-quiet" aria-label="Открыть меню пользователя"><span className="grid size-8 place-items-center bg-[#d9d0c2] font-serif">НС</span><span className="hidden sm:inline">Никита Солонуха</span><ChevronDown size={15} aria-hidden="true" /></button>
+        <button className="button button-quiet" aria-label="Открыть меню пользователя"><span className="grid size-8 place-items-center bg-[#d9d0c2] font-serif">{initials(user.fullName)}</span><span className="hidden sm:inline">{user.fullName}</span><ChevronDown size={15} aria-hidden="true" /></button>
       </header>
       <div className="page-content">{children}</div>
     </main>
-  </div>;
+  </div></CurrentUserProvider>;
 }
