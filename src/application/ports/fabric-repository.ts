@@ -1,4 +1,4 @@
-import type { FabricData } from "@/schemas/fabric";
+import type { FabricData, FabricPatchData } from "@/schemas/fabric";
 import type { Fabric } from "@/types/domain";
 
 export type FabricListQuery = {
@@ -13,7 +13,7 @@ export interface FabricRepository {
   findById(id: string): Promise<Fabric | null>;
   findByArticle(article: string): Promise<Fabric | null>;
   create(input: FabricData, actorId: string): Promise<Fabric>;
-  update(id: string, input: Partial<FabricData>, actorId: string): Promise<Fabric | null>;
+  update(id: string, input: FabricPatchData, actorId: string): Promise<Fabric | null>;
   archive(id: string, actorId?: string): Promise<boolean>;
   remove(id: string): Promise<boolean>;
 }
