@@ -1,4 +1,4 @@
-import { ImportWorkspace } from "@/features/fabric-import/import-workspace";
+import { ImportWorkspace } from "@/features/fabric-import/import-wizard";
 import { requireActor } from "@/infrastructure/auth/actor";
 import { can } from "@/lib/permissions";
 import { ButtonLink } from "@/components/ui/primitives";

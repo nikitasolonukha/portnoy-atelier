@@ -1,6 +1,6 @@
 import { fabricInputSchema } from "@/schemas/fabric";
 
-export type DuplicateStrategy = "reject" | "upsert";
+export type DuplicateStrategy = "skip" | "update";
 
 export function planFabricImport(rows: Record<string, unknown>[], existingArticles: Set<string>, strategy: DuplicateStrategy) {
   const create: Array<Record<string, unknown>> = [];
@@ -21,8 +21,8 @@ export function planFabricImport(rows: Record<string, unknown>[], existingArticl
     }
     seen.add(article);
     if (existingArticles.has(article)) {
-      if (strategy === "reject") invalid.push({ row: index + 2, issues: ["Артикул уже существует"] });
-      else update.push(parsed.data);
+      if (strategy === "update") update.push(parsed.data);
+      // The skip strategy is a valid no-op, not a validation failure.
       return;
     }
     create.push(parsed.data);

@@ -15,13 +15,15 @@ test("admin creates and archives a fabric", async ({ page }) => {
   await expect(page.getByText("В архиве", { exact: true })).toBeVisible();
 });
 
-test("CSV import validates and adds both rows", async ({ page }) => {
+test("CSV import maps columns, previews and adds all valid rows", async ({ page }) => {
   await page.goto("/fabrics/import");
   await page.locator('input[type="file"]').setInputFiles("e2e/fixtures/fabrics.csv");
-  await expect(page.getByText("2 строк", { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "1. Сопоставление колонок" })).toBeVisible();
+  await page.getByRole("button", { name: "Проверить строки" }).click();
   await expect(page.getByText("CSV-9001", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /Импортировать 2 строк/ }).click();
-  await expect(page.getByRole("status")).toContainText("Импортировано: 2");
+  await expect(page.getByRole("heading", { name: "Импорт завершён" })).toBeVisible();
+  await expect(page.getByText(/Создано: 2\. Обновлено: 0\. Пропущено: 0\. Ошибок: 0\./)).toBeVisible();
   await page.getByRole("link", { name: "Открыть каталог" }).click();
   await page.getByPlaceholder("Артикул, название, фабрика").fill("CSV-9001");
   await expect(page.getByRole("heading", { name: "Test Navy Fresco" })).toBeVisible();

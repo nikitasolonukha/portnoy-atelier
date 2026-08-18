@@ -223,10 +223,12 @@ export type Database = {
           created_by: string
           created_rows: number
           duplicate_strategy: string
+          failed_rows: number
           filename: string
           finished_at: string | null
           id: string
           invalid_rows: number
+          skipped_rows: number
           status: Database["public"]["Enums"]["import_status"]
           total_rows: number
           updated_rows: number
@@ -238,10 +240,12 @@ export type Database = {
           created_by: string
           created_rows?: number
           duplicate_strategy?: string
+          failed_rows?: number
           filename: string
           finished_at?: string | null
           id?: string
           invalid_rows?: number
+          skipped_rows?: number
           status?: Database["public"]["Enums"]["import_status"]
           total_rows?: number
           updated_rows?: number
@@ -253,10 +257,12 @@ export type Database = {
           created_by?: string
           created_rows?: number
           duplicate_strategy?: string
+          failed_rows?: number
           filename?: string
           finished_at?: string | null
           id?: string
           invalid_rows?: number
+          skipped_rows?: number
           status?: Database["public"]["Enums"]["import_status"]
           total_rows?: number
           updated_rows?: number

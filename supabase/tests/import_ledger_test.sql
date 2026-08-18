@@ -10,7 +10,7 @@ select policies_are(
   array['imports own read','imports staff create','imports own update'],
   'import ledger has exact read/create/update policies'
 );
-select col_default_is('public', 'fabric_imports', 'duplicate_strategy', '''skip''::text', 'skip is the safe default strategy');
+select col_default_is('public', 'fabric_imports', 'duplicate_strategy', 'skip', 'skip is the safe default strategy');
 
 select * from finish();
 rollback;
