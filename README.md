@@ -28,13 +28,17 @@ pnpm dev:supabase
 ```bash
 pnpm verify
 pnpm test:e2e
+pnpm db:reset
 pnpm db:test
+pnpm db:types
+pnpm test:e2e:supabase
 ```
 
 - Unit coverage gate: 80% on application/shared business layers.
 - Integration: `/api/v1` contracts and adapters.
 - Database: pgTAP tables, policies, triggers, indexes, seed.
-- E2E: production build in desktop Chromium and iPad WebKit.
+- Demo E2E: production build on desktop, iPad portrait/landscape and mobile.
+- Supabase E2E: production build with real local Auth JWT, RLS, Postgres and private Storage. Docker must be running.
 
 ## Production container
 

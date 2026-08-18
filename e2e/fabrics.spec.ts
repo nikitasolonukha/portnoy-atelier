@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import * as XLSX from "xlsx";
 
 test("admin creates and archives a fabric", async ({ page }) => {
   const article = `PW-${Date.now()}`;
@@ -27,4 +28,27 @@ test("CSV import maps columns, previews and adds all valid rows", async ({ page 
   await page.getByRole("link", { name: "Открыть каталог" }).click();
   await page.getByPlaceholder("Артикул, название, фабрика").fill("CSV-9001");
   await expect(page.getByRole("heading", { name: "Test Navy Fresco" })).toBeVisible();
+});
+
+test("XLSX and legacy XLS imports use the same validated workflow", async ({ page }) => {
+  const suffix = Date.now();
+  for (const file of [
+    { extension: "xlsx", bookType: "xlsx" as const, article: `XLSX-${suffix}` },
+    { extension: "xls", bookType: "biff8" as const, article: `XLS-${suffix}` },
+  ]) {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+      ["Артикул", "Название", "Производитель"],
+      [file.article, `${file.extension.toUpperCase()} fabric`, "Binary Mill"],
+    ]), "Fabrics");
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: file.bookType });
+
+    await page.goto("/fabrics/import");
+    await page.locator('input[type="file"]').setInputFiles({ name: `fabrics.${file.extension}`, mimeType: "application/octet-stream", buffer });
+    await expect(page.getByRole("heading", { name: "1. Сопоставление колонок" })).toBeVisible();
+    await page.getByRole("button", { name: "Проверить строки" }).click();
+    await expect(page.getByText(file.article, { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: /Импортировать 1 строк/ }).click();
+    await expect(page.getByText(/Создано: 1\. Обновлено: 0\. Пропущено: 0\. Ошибок: 0\./)).toBeVisible();
+  }
 });

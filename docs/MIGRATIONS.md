@@ -6,7 +6,7 @@ Supabase migrations forward-only. Применённые файлы не ред�
 
 1. Создать `supabase migration new <name>`.
 2. Добавить additive SQL, RLS, indexes, grants, triggers.
-3. Сначала расширить `supabase/tests/database_test.sql`.
+3. Сначала расширить `supabase/tests/database_test.sql` или добавить отдельный pgTAP regression test.
 4. Выполнить `pnpm db:reset`, `pnpm db:test`, `pnpm db:types`.
 5. Проверить backward compatibility старого приложения с новой схемой.
 6. Применить staging, снять evidence, затем production.
@@ -23,3 +23,5 @@ Supabase migrations forward-only. Применённые файлы не ред�
 - `202608180002_harden_stage_one.sql`: constraints, search indexes, user/audit/update triggers, DB validation конфигураций, grants и import idempotency metadata.
 - `202608180003_separate_fabric_from_option_groups.sql`: удаляет legacy `settings.fabric` и группу `fabric`; ткань остаётся только ссылкой `configurations.fabric_id`.
 - `202608190001_complete_import_ledger.sql`: добавляет итоговые `skipped/failed` счётчики, безопасную стратегию `skip`, own-update RLS и audit trigger завершённого импорта.
+- `202608190002_grant_service_role_fixture_operations.sql`: выдаёт только узкие права, необходимые локальному E2E fixture setup/cleanup; user flows продолжают работать с обычным JWT и RLS.
+- `202608190003_fix_audit_trigger_table_branching.sql`: устраняет обращение общего audit-trigger к полям другой таблицы и безопасно разделяет fabric/configuration events.

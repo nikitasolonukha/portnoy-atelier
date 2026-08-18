@@ -4,14 +4,15 @@
 
 - [ ] Clean intended diff; lockfile committed.
 - [ ] `pnpm verify` green.
-- [ ] `pnpm test:e2e` green for desktop and iPad/WebKit.
-- [ ] No skipped tests or narrowed coverage include.
+- [ ] `pnpm test:e2e` green for desktop, iPad portrait/landscape and mobile.
+- [ ] Only documented not-applicable skips; no narrowed coverage include.
 
 ## Data and auth
 
-- [ ] Migrations reset/test green locally.
+- [ ] Migrations reset/test/types green locally.
+- [ ] `pnpm test:e2e:supabase` green with ordinary user JWTs; service key limited to fixture setup/cleanup.
 - [ ] Staging migrations applied from files only.
-- [ ] Admin/tailor/employee RLS smoke tests passed without service key.
+- [ ] Admin/tailor/employee RLS smoke tests passed on staging without service key.
 - [ ] Backup and forward-fix/rollback owner recorded.
 
 ## Runtime
