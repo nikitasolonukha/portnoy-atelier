@@ -12,3 +12,7 @@
 8. В handoff указать: что изменено, какие команды прошли, что не проверено внешне, migrations/env/deploy actions.
 
 Источники истины: migrations для БД, OpenAPI для HTTP, schemas для input, application services для бизнес-правил, TASKS для прогресса. Conversation history не является источником истины.
+
+## Git handoff
+
+Перед изменениями выполнить `git status -sb`, `git fetch --prune origin` и создать короткую ветку от актуального `origin/main`. Публиковать через PR после зелёного CI. В конце передать branch, commit/PR URL, проверки и rollback SHA/tag. Полный протокол: `docs/GIT_WORKFLOW.md`. Токены и `.env.local` никогда не переносятся через Git или handoff-текст.

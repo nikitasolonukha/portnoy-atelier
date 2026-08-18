@@ -43,3 +43,11 @@ Preserve the atelier design direction and accessibility: native semantics, conne
 ## Handoff
 
 Update `docs/TASKS.md` in the same change. Report changed contracts, migrations, commands run, evidence, and external verification still required. Conversation history is not a source of truth.
+
+## Source control
+
+- Follow `docs/GIT_WORKFLOW.md`: protected `main`, short-lived branches, PR-only merges and Conventional Commits.
+- Begin with `git status -sb` and `git fetch --prune origin`; never mix unrelated changes.
+- Never store credentials in files, commits, remotes, prompts copied into docs, or command arguments. Use OS/GitHub/deployment secret stores.
+- Never force-push or rewrite shared history. Revert published changes and use forward-only corrective DB migrations.
+- Before handoff, leave a clean tree, pushed commit/PR, exact verification evidence and rollback reference.

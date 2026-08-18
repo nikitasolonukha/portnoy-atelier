@@ -1,0 +1,3 @@
+# <type>(<scope>): <imperative subject>
+# Types: feat, fix, docs, refactor, test, chore, ci, perf, revert
+# Explain why in the body. Mention migrations, contracts and evidence when relevant.
