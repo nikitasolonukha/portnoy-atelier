@@ -1,0 +1,15 @@
+---
+description: Accessible responsive atelier UI conventions
+globs: "src/**/*.tsx"
+alwaysApply: false
+---
+
+# UI
+
+- Keep the atelier direction: warm paper, graphite, burgundy, textile-first hierarchy; avoid generic SaaS cards and gradients.
+- Minimum interactive target is 44×44px. Use native buttons, links, labels, headings, and tables.
+- Connect errors with `aria-describedby`; dynamic success/error messages use status/alert semantics.
+- Preserve keyboard operation, visible focus, and `prefers-reduced-motion`.
+- Provide loading, empty, error, permission-denied, and retry states for async features.
+- Verify desktop, iPad landscape/portrait, and narrow mobile layouts.
+- Do not present unavailable future features as working.

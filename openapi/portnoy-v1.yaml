@@ -1,0 +1,142 @@
+openapi: 3.1.0
+info:
+  title: Portnoy API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - cookieSession: []
+paths:
+  /health:
+    get:
+      security: []
+      operationId: getHealth
+      responses:
+        "200": { description: Process is alive, content: { application/json: { schema: { $ref: "#/components/schemas/HealthResponse" } } } }
+  /readiness:
+    get:
+      security: []
+      operationId: getReadiness
+      responses:
+        "200": { description: Dependencies are ready }
+        "503": { $ref: "#/components/responses/Error" }
+  /fabrics:
+    get:
+      operationId: listFabrics
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [active, archived, all] } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 100 } }
+      responses:
+        "200": { description: Fabric collection }
+        "401": { $ref: "#/components/responses/Error" }
+    post:
+      operationId: createFabric
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/FabricInput" } } } }
+      responses:
+        "201": { description: Fabric created, headers: { Location: { schema: { type: string } } } }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+  /fabrics/{fabricId}:
+    parameters:
+      - { name: fabricId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getFabric
+      responses: { "200": { description: Fabric }, "404": { $ref: "#/components/responses/Error" } }
+    patch:
+      operationId: updateFabric
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/FabricInput" } } } }
+      responses: { "200": { description: Fabric updated }, "422": { $ref: "#/components/responses/Error" } }
+    delete:
+      operationId: deleteFabric
+      responses: { "204": { description: Deleted }, "409": { $ref: "#/components/responses/Error" } }
+  /configuration-groups:
+    get:
+      operationId: listConfigurationGroups
+      responses: { "200": { description: Active configuration groups with options }, "401": { $ref: "#/components/responses/Error" } }
+  /fabrics/{fabricId}/assets:
+    parameters:
+      - { name: fabricId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: uploadFabricAssets
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files, assetType]
+              properties:
+                assetType: { type: string, enum: [photo, texture] }
+                files: { type: array, maxItems: 12, items: { type: string, format: binary } }
+      responses: { "201": { description: Assets uploaded }, "413": { $ref: "#/components/responses/Error" }, "415": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } }
+  /configurations:
+    get:
+      operationId: listConfigurations
+      responses: { "200": { description: Configuration collection } }
+    post:
+      operationId: createConfiguration
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/ConfigurationInput" } } } }
+      responses: { "201": { description: Configuration created }, "422": { $ref: "#/components/responses/Error" } }
+  /configurations/{configurationId}:
+    parameters:
+      - { name: configurationId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: updateConfiguration
+      responses: { "200": { description: Configuration updated }, "404": { $ref: "#/components/responses/Error" } }
+    delete:
+      operationId: deleteConfiguration
+      responses: { "204": { description: Deleted }, "404": { $ref: "#/components/responses/Error" } }
+components:
+  securitySchemes:
+    cookieSession: { type: apiKey, in: cookie, name: sb-access-token }
+  responses:
+    Error:
+      description: Stable public error
+      content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+  schemas:
+    FabricInput:
+      type: object
+      required: [article, name]
+      properties:
+        article: { type: string, minLength: 1, maxLength: 80 }
+        name: { type: string, minLength: 1, maxLength: 160 }
+        manufacturer: { type: string }
+        collection: { type: string }
+        composition: { type: string }
+        mainColor: { type: string }
+        pattern: { type: string }
+        weightGsm: { type: number, minimum: 0 }
+        widthCm: { type: number, minimum: 0 }
+        pricePerMeter: { type: number, minimum: 0 }
+        currency: { type: string, enum: [RUB, EUR, USD] }
+        description: { type: string, maxLength: 2000 }
+    ConfigurationInput:
+      type: object
+      required: [name, fabricId, settings]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        fabricId: { type: string, format: uuid }
+        settings: { type: object, additionalProperties: { type: string } }
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: array, items: { type: object, required: [field, message, code], properties: { field: { type: string }, message: { type: string }, code: { type: string } } } }
+    HealthResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          required: [status, mode, version, timestamp]
+          properties:
+            status: { const: ok }
+            mode: { type: string, enum: [demo, supabase] }
+            version: { type: string }
+            timestamp: { type: string, format: date-time }

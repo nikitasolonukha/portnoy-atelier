@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.env*
+!.env.example
+coverage
+playwright-report
+test-results
+artifacts-*.png
+docs/PROJECT_SPEC_ORIGINAL.md

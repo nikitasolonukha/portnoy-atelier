@@ -1,0 +1,14 @@
+---
+description: Core invariants and delivery rules for Portnoy
+alwaysApply: true
+---
+
+# Core invariants
+
+- Read `AGENTS.md`, `docs/PROJECT_SPEC.md`, `docs/ARCHITECTURE.md`, and `docs/TASKS.md` before planning.
+- Preserve the dependency direction: `app/interface → application → ports/domain`; infrastructure implements ports.
+- Never silently fall back from `supabase` to `demo`. Mode is explicit in both server and public env.
+- Do not add 3D, WebGL, Three.js, GLB, or a fake 3D preview unless the user changes scope explicitly.
+- Never bypass RLS with a service-role key in application requests.
+- A task is complete only after relevant tests, typecheck, lint, build, docs, and `docs/TASKS.md` are updated.
+- Do not claim Supabase integration is verified unless local DB tests or staging evidence exists.

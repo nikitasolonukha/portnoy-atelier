@@ -1,0 +1,15 @@
+---
+description: Supabase migrations, RLS, storage, and data-integrity rules
+globs: "supabase/**/*"
+alwaysApply: false
+---
+
+# Database
+
+- Every schema change is a new timestamped migration; never edit an applied migration.
+- Prefer additive/backward-compatible migrations. Document rollback or forward-fix in `docs/MIGRATIONS.md`.
+- Enable RLS on every exposed table and test exact policies with pgTAP.
+- Enforce critical invariants in PostgreSQL, not only in UI/API validation.
+- All writes set actor identity and are covered by audit triggers.
+- Storage buckets remain private; validate MIME, size, path ownership, and role on both API and policy layers.
+- Run `pnpm db:reset`, `pnpm db:test`, and regenerate types after migration changes.

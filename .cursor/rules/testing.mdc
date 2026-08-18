@@ -1,0 +1,15 @@
+---
+description: Test pyramid and release evidence rules
+globs: "{src,e2e,supabase}/**/*.{test,spec,sql,ts}"
+alwaysApply: false
+---
+
+# Testing
+
+- Use RED → GREEN → REFACTOR for behavior changes.
+- Unit tests cover domain decisions and edge cases; integration tests cover API contracts and adapters; E2E tests cover user-visible outcomes.
+- Minimum coverage is 80% for branches, functions, lines, and statements. Never narrow include globs just to inflate coverage.
+- Tests are isolated and deterministic; use unique identifiers and semantic locators.
+- Every bug fix starts with a reproducer.
+- Critical desktop and iPad/WebKit flows must pass before handoff.
+- Database changes require pgTAP tests for tables, policies, triggers, and invariants.

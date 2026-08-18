@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        APP_MODE: demo
+        NEXT_PUBLIC_APP_MODE: demo
+    environment:
+      APP_MODE: demo
+      NEXT_PUBLIC_APP_MODE: demo
+      APP_VERSION: local-compose
+    ports:
+      - "3107:3000"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M

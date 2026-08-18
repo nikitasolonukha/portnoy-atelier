@@ -1,0 +1,15 @@
+---
+description: TypeScript, validation, and dependency-direction conventions
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript
+
+- Strict TypeScript; no `any`, `@ts-ignore`, non-null assertions, or unchecked casts without a written reason.
+- Validate every external boundary with a schema: HTTP JSON, search params, env, file rows, and DB JSON.
+- Distinguish raw Zod input from parsed output (`z.input` vs `z.output`).
+- UI components call stores/use cases, never Supabase directly.
+- Route handlers are thin: authenticate → validate → call use case → map response.
+- Public errors use stable codes and safe messages; log internal context separately with redaction.
+- Server Components are the default. Add `use client` only for state, effects, browser APIs, or event handlers.
