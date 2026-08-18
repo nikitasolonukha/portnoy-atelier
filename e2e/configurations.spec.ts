@@ -45,6 +45,7 @@ test("duplicate opens an independent canonical copy", async ({ page }) => {
   await expect(page.getByLabel("Название конфигурации")).toHaveValue("Городской синий — копия");
   await page.getByLabel("Название конфигурации").fill("Независимая копия");
   await page.getByRole("button", { name: "Сохранить изменения" }).click();
+  await expect(page.getByRole("status")).toHaveText("Все изменения сохранены");
   await page.goto(originalUrl);
   await goToSummary(page);
   await expect(page.getByLabel("Название конфигурации")).toHaveValue("Городской синий");
