@@ -1,5 +1,7 @@
 # Портной
 
+Private source repository: `https://github.com/nikitasolonukha/portnoy-atelier`.
+
 Production-oriented Stage 1 foundation for an atelier: auth, fabric catalog, XLS/XLSX/CSV import, data-driven suit configuration, saved variants, and comparison. 3D is intentionally excluded.
 
 ## Quick start

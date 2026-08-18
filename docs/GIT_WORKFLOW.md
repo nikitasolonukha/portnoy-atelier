@@ -58,6 +58,10 @@ For an unpushed local commit, prefer `git reset --soft HEAD^` only when nobody e
 
 Database migrations are forward-only. Never delete or edit an applied migration. Restore application code with a revert, then add a corrective migration after backup/impact review. `pnpm db:reset` is local-only and must never target staging or production.
 
+## GitHub plan note
+
+The repository is private. GitHub reported that server-side branch protection and secret scanning require GitHub Pro or public visibility for this account. Until the plan changes, PR-only discipline is procedural and reinforced locally by the versioned secret/pre-push hooks. Do not make the repository public merely to bypass this limitation. After upgrading, require `quality` and `e2e` checks on `main`, block force-push/deletion and enable push protection.
+
 ## Recovery on another machine
 
 ```bash
