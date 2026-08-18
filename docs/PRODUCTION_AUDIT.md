@@ -2,7 +2,7 @@
 
 Дата локальной проверки: 2026-08-19.
 
-Итог: **локальный release candidate READY; production deployment NOT READY** до появления внешних staging/CI/backup/observability evidence. Это ограничение окружения, а не скрытая заглушка функциональности.
+Итог: **release candidate и GitHub CI READY; production deployment NOT READY** до появления staging/backup/observability evidence. Это ограничение окружения, а не скрытая заглушка функциональности.
 
 ## Подтверждено локально
 
@@ -20,12 +20,12 @@
 - Secret/debug/placeholder/3D dependency scan не обнаружил credentials, production-заглушек, debug statements или 3D runtime dependencies.
 - Auth proxy, role checks, RLS, private Storage, input validation, safe errors, redacted structured logs и security headers присутствуют в коде.
 - Upload изображений проверяет размер, число файлов, MIME и magic bytes; orphaned Storage object удаляется при ошибке metadata insert.
+- GitHub Actions run `32195419805`: `quality` pass, demo `e2e` pass, real `supabase` pass; draft PR #5 содержит полный reviewable diff.
 
 ## Что ещё блокирует production deployment
 
 - Нет подключённого staging Supabase и доказательства применения migration на нём.
 - Локальная real-Supabase матрица выполнена, но ещё не повторена против staging.
-- GitHub workflow содержит отдельный Supabase gate, но зелёный внешний run/URL должен быть приложен после push.
 - Нет staging URL, настроенного alert destination и назначенного incident owner.
 - Нужны подтверждённые backup/restore и release owner.
 

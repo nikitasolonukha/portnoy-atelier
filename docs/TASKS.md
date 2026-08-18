@@ -15,14 +15,15 @@
 ## External activation checklist
 
 - [ ] Create/link real Supabase staging project; populate `.env.local` without committing secrets.
-- [x] Private GitHub remote is connected and the implementation branch is versioned locally; push/remote SHA evidence is required at handoff.
+- [x] Private GitHub remote is connected; branch `fix/complete-stage-one-core` and draft PR #5 are published.
 - [x] Local clean reset applies all six migrations and seed; 31 pgTAP assertions and type generation verified.
 - [x] Local admin/tailor/employee browser/API matrix and direct JWT/RLS matrix pass without service key in user flows.
 - [ ] Apply migrations + pgTAP to linked staging Supabase and attach CI evidence.
 - [x] Canonical Supabase TypeScript types generated from the verified local schema; domain relation aliases derive from them.
 - [ ] Create staging admin/tailor/employee test users and repeat the browser/RLS matrix against staging.
 - [x] Storage upload endpoint validates decoded JPEG/PNG/WebP signatures, size, count and rolls back orphaned objects.
-- [ ] Push the final branch, attach a green GitHub Actions URL, create staging deployment and fill `RELEASE_CHECKLIST.md`.
+- [x] GitHub Actions run `32195419805` is green for `quality`, demo `e2e` and real `supabase` jobs.
+- [ ] Create staging deployment and fill `RELEASE_CHECKLIST.md` with staging/backup/owner evidence.
 - [ ] Configure production observability/alerts and named incident owner.
 - [ ] Approve a production release only after staging, CI, backup/rollback and observability evidence are attached.
 
