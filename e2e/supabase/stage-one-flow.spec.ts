@@ -1,0 +1,103 @@
+import { expect, test } from "@playwright/test";
+import { goToSummary, loginAs, png } from "./helpers";
+
+test("real Supabase Stage 1 flow persists through refresh, direct URLs and logout", async ({ page }) => {
+  const suffix = Date.now();
+  const article = `E2E-FLOW-${suffix}`;
+  const importArticle = `E2E-IMPORT-${suffix}`;
+  const fabricName = `Supabase wool ${suffix}`;
+  const updatedFabricName = `${fabricName} updated`;
+  const configurationName = `Supabase suit ${suffix}`;
+  const updatedConfigurationName = `${configurationName} updated`;
+  const consoleErrors: string[] = [];
+  const serverErrors: string[] = [];
+  page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
+  page.on("response", (response) => { if (response.status() >= 500) serverErrors.push(`${response.status()} ${response.url()}`); });
+
+  await loginAs(page, "admin");
+  await page.goto("/fabrics/new");
+  await page.getByLabel("Артикул").fill(article);
+  await page.getByLabel("Название").fill(fabricName);
+  await page.getByLabel("Производитель").fill("E2E Mill");
+  await page.getByLabel("Состав").fill("100% шерсть");
+  await page.getByLabel("Основной цвет").fill("Синий");
+  await page.getByLabel("Цена за метр").fill("15000");
+  await page.locator('input[type="file"][multiple]').setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: png });
+  await page.locator('input[type="file"]:not([multiple])').setInputFiles({ name: "texture.png", mimeType: "image/png", buffer: png });
+  await page.getByRole("button", { name: "Сохранить ткань" }).click();
+  await expect(page).toHaveURL(/\/fabrics\/[^/]+$/);
+  const fabricUrl = page.url();
+  await expect(page.getByRole("heading", { name: fabricName })).toBeVisible();
+  await expect(page.getByRole("img", { name: "photo.png" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "texture.png" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("img", { name: "photo.png" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "texture.png" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Редактировать" }).click();
+  await page.getByLabel("Название").fill(updatedFabricName);
+  await page.locator('input[type="file"]:not([multiple])').setInputFiles({ name: "texture-replaced.png", mimeType: "image/png", buffer: png });
+  await page.getByRole("button", { name: "Сохранить изменения" }).click();
+  await expect(page.getByRole("heading", { name: updatedFabricName })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("img", { name: "texture-replaced.png" })).toBeVisible();
+
+  await page.goto("/fabrics/import");
+  await page.locator('input[type="file"]').setInputFiles({ name: "supabase.csv", mimeType: "text/csv", buffer: Buffer.from(`SKU,Title,Brand\n${importArticle},Imported E2E,E2E Mill`, "utf8") });
+  await page.getByRole("button", { name: "Проверить строки" }).click();
+  await page.getByRole("button", { name: "Импортировать 1 строк" }).click();
+  await expect(page.getByRole("heading", { name: "Импорт завершён" })).toBeVisible();
+  await expect(page.getByText(/Создано: 1\. Обновлено: 0\. Пропущено: 0\. Ошибок: 0\./)).toBeVisible();
+
+  await page.goto("/configurator");
+  await page.getByRole("button", { name: new RegExp(updatedFabricName) }).click();
+  await page.getByRole("button", { name: "Далее" }).click();
+  await page.getByRole("button", { name: /Двубортный/ }).click();
+  await page.getByRole("button", { name: "Далее" }).click();
+  await page.getByRole("button", { name: /Острые/ }).click();
+  await page.getByRole("button", { name: "Далее" }).click();
+  await page.getByRole("button", { name: /^Две$/ }).click();
+  await page.getByRole("button", { name: "Далее" }).click();
+  await page.getByRole("button", { name: /В рамку/ }).click();
+  await page.getByRole("button", { name: "Далее" }).click();
+  await page.getByRole("button", { name: /С одной складкой/ }).click();
+  await page.getByRole("button", { name: "Далее" }).click();
+  await page.getByRole("button", { name: /^Однобортный$/ }).click();
+  await page.getByLabel("Название конфигурации").fill(configurationName);
+  await page.getByRole("button", { name: "Сохранить конфигурацию" }).click();
+  await expect(page).toHaveURL(/\/configurator\/[^/?]+$/);
+  const configurationUrl = page.url();
+  await page.reload();
+  await goToSummary(page);
+  await expect(page.getByLabel("Название конфигурации")).toHaveValue(configurationName);
+  await page.getByLabel("Название конфигурации").fill(updatedConfigurationName);
+  await page.getByRole("button", { name: "Сохранить изменения" }).click();
+  await expect(page.getByRole("status")).toHaveText("Все изменения сохранены");
+  const matching = await page.evaluate(async (prefix) => {
+    const response = await fetch("/api/v1/configurations");
+    const payload = await response.json();
+    return payload.data.filter((item: { name: string }) => item.name.startsWith(prefix)).length;
+  }, configurationName);
+  expect(matching).toBe(1);
+
+  await page.goto("/configurations");
+  await page.getByRole("button", { name: `Дублировать ${updatedConfigurationName}` }).click();
+  await expect(page).toHaveURL(/\/configurator\/[^/?]+$/);
+  expect(page.url()).not.toBe(configurationUrl);
+  await goToSummary(page);
+  await page.getByLabel("Название конфигурации").fill(`${updatedConfigurationName} copy`);
+  await page.getByRole("button", { name: "Сохранить изменения" }).click();
+  await page.goto("/configurations");
+  await page.getByRole("checkbox", { name: `Выбрать ${updatedConfigurationName} для сравнения` }).check();
+  await page.getByRole("checkbox", { name: `Выбрать ${updatedConfigurationName} copy для сравнения` }).check();
+  await page.getByRole("button", { name: "Сравнить 2/2" }).click();
+  await expect(page.locator("[data-compare-row]")).toHaveCount(7);
+
+  await page.getByRole("button", { name: "Выйти" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
+  expect(consoleErrors).toEqual([]);
+  expect(serverErrors).toEqual([]);
+  expect(fabricUrl).toMatch(/\/fabrics\/[^/]+$/);
+});

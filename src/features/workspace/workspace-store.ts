@@ -10,7 +10,7 @@ const mode = process.env.NEXT_PUBLIC_APP_MODE === "supabase" ? "supabase" : "dem
 const usesSupabase = mode === "supabase";
 
 type WorkspaceState = WorkspaceData & {
-  hydrate: () => Promise<void>;
+  hydrate: (options?: { background?: boolean }) => Promise<void>;
   addFabric: (fabric: Fabric) => Promise<Fabric>;
   updateFabric: (id: string, patch: Partial<Fabric>) => Promise<Fabric>;
   saveConfiguration: (configuration: SavedConfiguration) => Promise<SavedConfiguration>;
@@ -24,9 +24,9 @@ function fabricPayload(fabric: Fabric) {
 
 const createWorkspaceState: StateCreator<WorkspaceState> = (set, get) => ({
   ...createInitialWorkspaceData(mode),
-  hydrate: async () => {
+  hydrate: async (options) => {
     if (!usesSupabase || get().status === "loading") return;
-    set({ fabrics: [], configurations: [], groups: [], status: "loading", error: null });
+    if (!options?.background) set({ fabrics: [], configurations: [], groups: [], status: "loading", error: null });
     try {
       const [fabrics, configurations, groups] = await Promise.all([
         requestData<Fabric[]>("/api/v1/fabrics?status=all"),
@@ -35,7 +35,9 @@ const createWorkspaceState: StateCreator<WorkspaceState> = (set, get) => ({
       ]);
       set({ fabrics, configurations, groups, status: "ready", error: null });
     } catch (cause) {
-      set({ fabrics: [], configurations: [], groups: [], status: "error", error: cause instanceof Error ? cause.message : "Не удалось загрузить рабочее пространство" });
+      const error = cause instanceof Error ? cause.message : "Не удалось загрузить рабочее пространство";
+      if (options?.background) set({ status: "ready", error });
+      else set({ fabrics: [], configurations: [], groups: [], status: "error", error });
     }
   },
   addFabric: async (fabric) => {

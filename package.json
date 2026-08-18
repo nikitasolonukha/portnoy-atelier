@@ -12,6 +12,7 @@
     "test": "vitest run --config vitest.project.config.ts",
     "test:coverage": "vitest run --coverage --config vitest.project.config.ts",
     "test:e2e": "cross-env APP_MODE=demo NEXT_PUBLIC_APP_MODE=demo playwright test --config=playwright.production.config.ts",
+    "test:e2e:supabase": "node scripts/run-supabase-e2e.mjs",
     "dev:supabase": "cross-env APP_MODE=supabase NEXT_PUBLIC_APP_MODE=supabase next dev",
     "build:supabase": "cross-env APP_MODE=supabase NEXT_PUBLIC_APP_MODE=supabase next build",
     "test:integration": "cross-env APP_MODE=demo vitest run --config vitest.integration.config.ts",

@@ -118,7 +118,7 @@ export function ImportWorkspace() {
       const next = usesSupabase
         ? await requestData<FabricImportResult>("/api/v1/fabric-imports", { method: "POST", body: JSON.stringify({ filename, strategy, rows: mappedRows }) })
         : await executeDemo();
-      if (usesSupabase) await hydrate();
+      if (usesSupabase) await hydrate({ background: true });
       setResult(next); setPhase("result");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Не удалось выполнить импорт"); setPhase("preview");

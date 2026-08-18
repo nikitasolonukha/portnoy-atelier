@@ -84,7 +84,7 @@ export function FabricForm({ fabricId }: { fabricId?: string }) {
         for (const asset of (fabric?.assets ?? []).filter((item) => removedAssets.includes(item.id) && !(item.type === "texture" && texture))) {
           await deleteAsset(saved.id, asset);
         }
-        await hydrate();
+        await hydrate({ background: true });
       }
       router.push(`/fabrics/${saved.id}`);
     } catch (cause) {

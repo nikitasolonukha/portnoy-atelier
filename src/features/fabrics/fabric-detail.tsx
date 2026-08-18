@@ -47,7 +47,7 @@ export function FabricDetail({ id }: { id: string }) {
         const payload = await response.json().catch(() => null);
         throw new Error(payload?.error?.message || "Не удалось удалить ткань");
       }
-      await hydrate();
+      await hydrate({ background: true });
       router.replace("/fabrics");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Не удалось удалить ткань");
