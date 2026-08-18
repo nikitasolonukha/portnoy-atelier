@@ -20,7 +20,7 @@ select has_trigger('public', 'configurations', 'configurations_validate_settings
 select has_trigger('public', 'profiles', 'profiles_set_updated_at', 'profiles updated_at trigger exists');
 select policies_are('public', 'fabrics', array['catalog authenticated read','catalog staff insert','catalog staff update','catalog admin delete'], 'fabric RLS policies are exact');
 select policies_are('public', 'configurations', array['configurations own read','configurations own insert','configurations own update','configurations own delete'], 'configuration RLS policies are exact');
-select results_eq('select count(*)::bigint from public.configuration_groups where is_active', array[7::bigint], 'all Stage 1 groups are seeded');
+select results_eq('select count(*)::bigint from public.configuration_groups where is_active', array[6::bigint], 'all suit option groups are seeded');
 
 select * from finish();
 rollback;

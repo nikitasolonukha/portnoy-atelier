@@ -21,3 +21,4 @@ Supabase migrations forward-only. Применённые файлы не ред�
 
 - `202608180001_stage_one.sql`: базовые сущности, RLS, Storage, seed groups.
 - `202608180002_harden_stage_one.sql`: constraints, search indexes, user/audit/update triggers, DB validation конфигураций, grants и import idempotency metadata.
+- `202608180003_separate_fabric_from_option_groups.sql`: удаляет legacy `settings.fabric` и группу `fabric`; ткань остаётся только ссылкой `configurations.fabric_id`.
