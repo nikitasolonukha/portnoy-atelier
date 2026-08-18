@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.project.config.ts",
+    "standalone:check": "node scripts/check-standalone-runtime.mjs",
     "test:coverage": "vitest run --coverage --config vitest.project.config.ts",
     "test:e2e": "cross-env APP_MODE=demo NEXT_PUBLIC_APP_MODE=demo playwright test --config=playwright.production.config.ts",
     "test:e2e:supabase": "node scripts/run-supabase-e2e.mjs",
@@ -22,7 +23,7 @@
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "db:types": "node scripts/generate-db-types.mjs",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm test:integration && pnpm build",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm test:integration && pnpm build && pnpm standalone:check",
     "container:up": "docker compose -p portnoy up -d --build app",
     "container:down": "docker compose -p portnoy down"
   },
