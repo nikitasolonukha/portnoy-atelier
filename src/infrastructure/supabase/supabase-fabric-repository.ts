@@ -1,15 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FabricListQuery, FabricRepository } from "@/application/ports/fabric-repository";
 import { ApiProblem } from "@/lib/api-response";
-import type { FabricData } from "@/schemas/fabric";
+import type { FabricData, FabricPatchData } from "@/schemas/fabric";
 import { mapFabricInsert, mapFabricRow } from "./fabric-mapper";
 import type { FabricRow } from "./database.types";
+
+const fabricSelection = "*,fabric_assets(*)";
 
 export class SupabaseFabricRepository implements FabricRepository {
   constructor(private readonly client: SupabaseClient) {}
 
   async list(query: FabricListQuery = {}) {
-    let request = this.client.from("fabrics").select("*").order("updated_at", { ascending: false }).limit(Math.min(query.limit ?? 100, 200));
+    let request = this.client.from("fabrics").select(fabricSelection).order("updated_at", { ascending: false }).limit(Math.min(query.limit ?? 100, 200));
     if (query.status === "active" || !query.status) request = request.eq("is_active", true);
     if (query.status === "archived") request = request.eq("is_active", false);
     if (query.query) request = request.or(`article.ilike.%${query.query}%,name.ilike.%${query.query}%,manufacturer.ilike.%${query.query}%`);
@@ -20,25 +22,25 @@ export class SupabaseFabricRepository implements FabricRepository {
   }
 
   async findById(id: string) {
-    const { data, error } = await this.client.from("fabrics").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await this.client.from("fabrics").select(fabricSelection).eq("id", id).maybeSingle();
     if (error) throw new ApiProblem("fabric_read_failed", "Не удалось загрузить ткань", 500);
     return data ? mapFabricRow(data as unknown as FabricRow) : null;
   }
 
   async findByArticle(article: string) {
-    const { data, error } = await this.client.from("fabrics").select("*").eq("article", article).maybeSingle();
+    const { data, error } = await this.client.from("fabrics").select(fabricSelection).ilike("article", article).maybeSingle();
     if (error) throw new ApiProblem("fabric_read_failed", "Не удалось проверить артикул", 500);
     return data ? mapFabricRow(data as unknown as FabricRow) : null;
   }
 
   async create(input: FabricData, actorId: string) {
-    const { data, error } = await this.client.from("fabrics").insert(mapFabricInsert(input, actorId)).select("*").single();
+    const { data, error } = await this.client.from("fabrics").insert(mapFabricInsert(input, actorId)).select(fabricSelection).single();
     if (error?.code === "23505") throw new ApiProblem("fabric_article_exists", "Ткань с таким артикулом уже существует", 409);
     if (error || !data) throw new ApiProblem("fabric_create_failed", "Не удалось создать ткань", 500);
     return mapFabricRow(data as unknown as FabricRow);
   }
 
-  async update(id: string, input: Partial<FabricData>, actorId: string) {
+  async update(id: string, input: FabricPatchData, actorId: string) {
     const patch = Object.fromEntries(Object.entries({
       article: input.article,
       name: input.name,
@@ -52,9 +54,11 @@ export class SupabaseFabricRepository implements FabricRepository {
       price_per_meter: input.pricePerMeter,
       currency: input.currency,
       description: input.description,
+      is_active: input.isActive,
       updated_by: actorId,
     }).filter(([, value]) => value !== undefined));
-    const { data, error } = await this.client.from("fabrics").update(patch).eq("id", id).select("*").maybeSingle();
+    const { data, error } = await this.client.from("fabrics").update(patch).eq("id", id).select(fabricSelection).maybeSingle();
+    if (error?.code === "23505") throw new ApiProblem("fabric_article_exists", "Ткань с таким артикулом уже существует", 409);
     if (error) throw new ApiProblem("fabric_update_failed", "Не удалось обновить ткань", 500);
     return data ? mapFabricRow(data as unknown as FabricRow) : null;
   }

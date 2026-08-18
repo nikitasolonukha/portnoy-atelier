@@ -1,3 +1,12 @@
+export type FabricAsset = {
+  id: string;
+  type: "photo" | "texture";
+  originalFilename: string;
+  mimeType: string;
+  sortOrder: number;
+  url: string;
+};
+
 export type Fabric = {
   id: string;
   article: string;
@@ -14,6 +23,7 @@ export type Fabric = {
   description?: string;
   isActive: boolean;
   swatch: string;
+  assets?: FabricAsset[];
   createdAt: string;
   updatedAt: string;
 };

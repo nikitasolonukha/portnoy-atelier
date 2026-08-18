@@ -20,21 +20,23 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: Aria
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:disabled, [aria-disabled="true"] { cursor: not-allowed; opacity: .58; }
+button:active:not(:disabled), .button:active:not([aria-disabled="true"]) { transform: scale(.98); }
 
 .font-display { font-family: Georgia, "Times New Roman", serif; }
 .app-grid { min-height: 100dvh; display: grid; grid-template-columns: 252px minmax(0, 1fr); }
 .sidebar { position: sticky; top: 0; height: 100dvh; background: var(--sidebar); color: #f5f1e8; padding: 24px 18px; display: flex; flex-direction: column; z-index: 30; }
 .brand-mark { width: 38px; height: 38px; border: 1px solid #7f827a; display: grid; place-items: center; font-family: Georgia, serif; font-size: 20px; }
-.nav-link { display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 0 12px; color: #c8c9c3; text-decoration: none; border-left: 2px solid transparent; transition: .18s ease; }
+.nav-link { display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 0 12px; color: #c8c9c3; text-decoration: none; border-left: 2px solid transparent; transition-property: color, background-color, border-color; transition-duration: .18s; transition-timing-function: ease; }
 .nav-link:hover { color: white; background: #2a2f2b; }
 .nav-link[data-active="true"] { color: white; border-left-color: #bd7e88; background: #2b302c; }
 .page-shell { min-width: 0; }
 .topbar { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px clamp(18px, 4vw, 44px); border-bottom: 1px solid var(--line); background: rgba(244,240,232,.94); backdrop-filter: blur(14px); position: sticky; top: 0; z-index: 20; }
 .page-content { padding: 32px clamp(18px, 4vw, 44px) 56px; max-width: 1540px; margin-inline: auto; }
 .eyebrow { color: var(--wine); text-transform: uppercase; letter-spacing: .16em; font-size: 11px; font-weight: 700; }
-.page-title { font-family: Georgia, serif; font-size: clamp(32px, 4vw, 52px); line-height: 1; letter-spacing: -.035em; margin: 7px 0 0; font-weight: 400; }
+.page-title { font-family: Georgia, serif; font-size: clamp(32px, 4vw, 52px); line-height: 1; letter-spacing: -.035em; margin: 7px 0 0; font-weight: 400; text-wrap: balance; }
 .muted { color: var(--muted); }
-.button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid transparent; padding: 0 16px; cursor: pointer; text-decoration: none; font-weight: 700; font-size: 14px; transition: .18s ease; white-space: nowrap; }
+.button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid transparent; padding: 0 16px; cursor: pointer; text-decoration: none; font-weight: 700; font-size: 14px; transition-property: transform, background-color, border-color, opacity; transition-duration: .18s; transition-timing-function: ease; white-space: nowrap; }
 .button-primary { color: white; background: var(--wine); border-color: var(--wine); }
 .button-primary:hover { background: var(--wine-dark); }
 .button-secondary { color: var(--ink); background: transparent; border-color: var(--line); }
@@ -63,10 +65,16 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 900px) {
   .app-grid { display: block; }
-  .sidebar { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); transform: translateX(-100%); transition: transform .2s ease; box-shadow: 24px 0 80px rgba(0,0,0,.28); }
-  .sidebar[data-open="true"] { transform: translateX(0); }
+  .sidebar { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); transform: translateX(-100%); visibility: hidden; pointer-events: none; transition: transform .2s ease; box-shadow: 24px 0 80px rgba(0,0,0,.28); }
+  .sidebar[data-open="true"] { transform: translateX(0); visibility: visible; pointer-events: auto; }
   .topbar { min-height: 64px; }
   .page-content { padding-top: 24px; }
+}
+
+@media (max-width: 520px) {
+  .page-content { padding-inline: 14px; padding-bottom: 40px; }
+  .page-title { font-size: 34px; }
+  .rule-title { align-items: flex-start; flex-direction: column; gap: 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

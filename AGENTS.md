@@ -6,7 +6,7 @@ Before planning, read `docs/ONBOARDING.md`, `docs/PROJECT_SPEC.md`, `docs/ARCHIT
 
 ## Invariants
 
-- Stack: Next.js 16.2 App Router, React 19, strict TypeScript, Tailwind 4, Supabase, pnpm 10.24, Node 22.19.
+- Stack: Next.js 16.3.1 App Router, React 19, strict TypeScript, Tailwind 4, Supabase, pnpm 10.24, Node 22.19.
 - Dependency direction: `app/interface → application → ports/domain`; `infrastructure` implements ports.
 - Server Components by default; Client Components only for state/effects/browser events.
 - Validate env, HTTP, file rows, params, and DB JSON with Zod or PostgreSQL constraints.
@@ -30,7 +30,7 @@ Commands:
 - `pnpm build`
 - `pnpm test:e2e`
 - `pnpm verify`
-- DB changes: `pnpm db:reset`, `pnpm db:test`, `pnpm db:types`
+- Real Supabase/Auth/RLS/Storage or DB changes: `pnpm db:reset`, `pnpm db:test`, `pnpm db:types`, `pnpm test:e2e:supabase`
 
 ## API and errors
 
@@ -38,7 +38,7 @@ REST lives under `/api/v1` and follows `openapi/portnoy-v1.yaml`. Routes authent
 
 ## UI
 
-Preserve the atelier design direction and accessibility: native semantics, connected labels/errors, 44px targets, visible focus, reduced motion, loading/empty/error/permission states. Verify desktop and iPad portrait/landscape.
+Preserve the atelier design direction and accessibility: native semantics, connected labels/errors, 44px targets, visible focus, reduced motion, loading/empty/error/permission states. Verify desktop, iPad portrait/landscape and mobile.
 
 ## Handoff
 

@@ -1,21 +1,16 @@
 "use client";
 
-import { create } from "zustand";
+import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
-import { demoConfigurations, demoFabrics, demoGroups } from "@/lib/demo-data";
 import { requestData } from "@/lib/http-client";
 import type { ConfigurationGroup, Fabric, SavedConfiguration } from "@/types/domain";
+import { createInitialWorkspaceData, type WorkspaceData } from "./workspace-mode";
 
-const usesSupabase = process.env.NEXT_PUBLIC_APP_MODE === "supabase";
+const mode = process.env.NEXT_PUBLIC_APP_MODE === "supabase" ? "supabase" : "demo";
+const usesSupabase = mode === "supabase";
 
-type WorkspaceState = {
-  fabrics: Fabric[];
-  configurations: SavedConfiguration[];
-  groups: ConfigurationGroup[];
-  hydrated: boolean;
-  loading: boolean;
-  error: string | null;
-  hydrate: () => Promise<void>;
+type WorkspaceState = WorkspaceData & {
+  hydrate: (options?: { background?: boolean }) => Promise<void>;
   addFabric: (fabric: Fabric) => Promise<Fabric>;
   updateFabric: (id: string, patch: Partial<Fabric>) => Promise<Fabric>;
   saveConfiguration: (configuration: SavedConfiguration) => Promise<SavedConfiguration>;
@@ -27,25 +22,22 @@ function fabricPayload(fabric: Fabric) {
   return { article: fabric.article, name: fabric.name, manufacturer: fabric.manufacturer, collection: fabric.collection, composition: fabric.composition, mainColor: fabric.mainColor, pattern: fabric.pattern, weightGsm: fabric.weightGsm, widthCm: fabric.widthCm, pricePerMeter: fabric.pricePerMeter, currency: fabric.currency, description: fabric.description };
 }
 
-export const useWorkspace = create<WorkspaceState>()(persist((set, get) => ({
-  fabrics: demoFabrics,
-  configurations: demoConfigurations,
-  groups: demoGroups,
-  hydrated: !usesSupabase,
-  loading: false,
-  error: null,
-  hydrate: async () => {
-    if (!usesSupabase || get().loading) return;
-    set({ loading: true, error: null });
+const createWorkspaceState: StateCreator<WorkspaceState> = (set, get) => ({
+  ...createInitialWorkspaceData(mode),
+  hydrate: async (options) => {
+    if (!usesSupabase || get().status === "loading") return;
+    if (!options?.background) set({ fabrics: [], configurations: [], groups: [], status: "loading", error: null });
     try {
       const [fabrics, configurations, groups] = await Promise.all([
         requestData<Fabric[]>("/api/v1/fabrics?status=all"),
         requestData<SavedConfiguration[]>("/api/v1/configurations"),
         requestData<ConfigurationGroup[]>("/api/v1/configuration-groups"),
       ]);
-      set({ fabrics, configurations, groups, hydrated: true, loading: false });
+      set({ fabrics, configurations, groups, status: "ready", error: null });
     } catch (cause) {
-      set({ loading: false, error: cause instanceof Error ? cause.message : "Не удалось загрузить рабочее пространство" });
+      const error = cause instanceof Error ? cause.message : "Не удалось загрузить рабочее пространство";
+      if (options?.background) set({ status: "ready", error });
+      else set({ fabrics: [], configurations: [], groups: [], status: "error", error });
     }
   },
   addFabric: async (fabric) => {
@@ -56,7 +48,9 @@ export const useWorkspace = create<WorkspaceState>()(persist((set, get) => ({
   },
   updateFabric: async (id, patch) => {
     if (!usesSupabase) {
-      const updated = { ...get().fabrics.find((fabric) => fabric.id === id)!, ...patch, updatedAt: new Date().toISOString() };
+      const current = get().fabrics.find((fabric) => fabric.id === id);
+      if (!current) throw new Error("Ткань не найдена");
+      const updated = { ...current, ...patch, updatedAt: new Date().toISOString() };
       set((state) => ({ fabrics: state.fabrics.map((fabric) => fabric.id === id ? updated : fabric) }));
       return updated;
     }
@@ -81,5 +75,13 @@ export const useWorkspace = create<WorkspaceState>()(persist((set, get) => ({
     }
     set((state) => ({ configurations: state.configurations.filter((item) => item.id !== id) }));
   },
-  resetDemo: () => { if (!usesSupabase) set({ fabrics: demoFabrics, configurations: demoConfigurations, groups: demoGroups, error: null }); },
-}), { name: "portnoy-workspace-v2", version: 2, partialize: (state) => ({ fabrics: state.fabrics, configurations: state.configurations }) }));
+  resetDemo: () => { if (!usesSupabase) set(createInitialWorkspaceData("demo")); },
+});
+
+export const useWorkspace = usesSupabase
+  ? create<WorkspaceState>()(createWorkspaceState)
+  : create<WorkspaceState>()(persist(createWorkspaceState, {
+      name: "portnoy-workspace-v2",
+      version: 2,
+      partialize: (state) => ({ fabrics: state.fabrics, configurations: state.configurations }),
+    }));

@@ -31,3 +31,7 @@ No Three.js/WebGL/GLB or misleading pseudo-3D. The flat technical preview preser
 ## ADR-008 — Test pyramid as release contract
 
 Unit coverage ≥80%, API integration, pgTAP, and desktop+iPad E2E are required evidence. Missing external staging evidence remains explicit in the release checklist.
+
+## ADR-009 — Fabric is not a configuration option group
+
+The selected material is stored only in `configurations.fabric_id`. JSONB `settings` contains suit construction options, so the configurator has one fabric selector and six option groups without a duplicate empty fabric step.

@@ -6,7 +6,7 @@ Full-stack модуль ателье для сотрудников: автори
 
 ## Стек
 
-- Next.js 16.2 App Router, React 19, strict TypeScript, Tailwind 4.
+- Next.js 16.3.1 App Router, React 19, strict TypeScript, Tailwind 4.
 - Supabase PostgreSQL/Auth/Storage/RLS; явный `demo` adapter для автономной разработки.
 - Zod 4, Zustand, SheetJS, Vitest, Playwright, pgTAP.
 - pnpm 10.24, Node 22.19, Docker standalone runtime.
