@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createConfiguratorDraft, isConfiguratorDirty, markConfiguratorSaved } from "./configurator-state";
+import { createConfiguratorDraft, isConfiguratorDirty, markConfiguratorSaved, shouldNavigateToCanonicalConfiguration } from "./configurator-state";
 
 const defaults = { jacket: "single", lapel: "notch" };
 
@@ -22,5 +22,10 @@ describe("configurator state model", () => {
     expect(saved.id).toBe("server-id");
     expect(saved.status).toBe("clean");
     expect(isConfiguratorDirty(saved)).toBe(false);
+  });
+
+  it("navigates only when a save assigns a different canonical id", () => {
+    expect(shouldNavigateToCanonicalConfiguration(null, "server-id")).toBe(true);
+    expect(shouldNavigateToCanonicalConfiguration("server-id", "server-id")).toBe(false);
   });
 });
