@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/layout/app-shell";
+import { AppShell } from "@/components/layout/app-shell-accessible";
 import { WorkspaceBootstrap } from "@/features/workspace/workspace-bootstrap";
 import { requireActor } from "@/infrastructure/auth/actor";
 
