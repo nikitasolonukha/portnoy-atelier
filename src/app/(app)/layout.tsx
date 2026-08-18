@@ -4,5 +4,5 @@ import { requireActor } from "@/infrastructure/auth/actor";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const user = await requireActor();
-  return <AppShell user={user}><WorkspaceBootstrap />{children}</AppShell>;
+  return <AppShell user={user}><WorkspaceBootstrap>{children}</WorkspaceBootstrap></AppShell>;
 }
