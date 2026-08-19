@@ -5,11 +5,16 @@ export type FabricListQuery = {
   query?: string;
   status?: "active" | "archived" | "all";
   limit?: number;
-  cursor?: string;
+  page?: number;
+};
+
+export type FabricPage = {
+  items: Fabric[];
+  total: number;
 };
 
 export interface FabricRepository {
-  list(query?: FabricListQuery): Promise<Fabric[]>;
+  list(query?: FabricListQuery): Promise<FabricPage>;
   findById(id: string): Promise<Fabric | null>;
   findByArticle(article: string): Promise<Fabric | null>;
   create(input: FabricData, actorId: string): Promise<Fabric>;

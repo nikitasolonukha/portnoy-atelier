@@ -9,7 +9,7 @@ let fabrics = structuredClone(demoFabrics);
 let configurations = structuredClone(demoConfigurations);
 
 export class DemoFabricRepository implements FabricRepository {
-  async list(query: FabricListQuery = {}) { return filterFabrics(fabrics, { query: query.query, status: query.status }); }
+  async list(query: FabricListQuery = {}) { const matches = filterFabrics(fabrics, { query: query.query, status: query.status }); const limit = Math.min(query.limit ?? 100, 200); const from = ((query.page ?? 1) - 1) * limit; return { items: matches.slice(from, from + limit), total: matches.length }; }
   async findById(id: string) { return fabrics.find((item) => item.id === id) ?? null; }
   async findByArticle(article: string) { return fabrics.find((item) => item.article === article) ?? null; }
   async create(input: FabricData) {

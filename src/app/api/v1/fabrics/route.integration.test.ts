@@ -15,6 +15,7 @@ describe("/api/v1/fabrics integration", () => {
     const listed = await GET(new NextRequest(`http://localhost/api/v1/fabrics?q=${article}&status=all`));
     const body = await listed.json();
     expect(body.data).toHaveLength(1);
+    expect(body.meta).toMatchObject({ page: 1, limit: 100, total: 1, hasMore: false });
   });
 
   it("returns a field-level validation error", async () => {

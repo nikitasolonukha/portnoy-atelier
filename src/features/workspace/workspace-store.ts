@@ -2,7 +2,7 @@
 
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
-import { requestData } from "@/lib/http-client";
+import { requestAllPages, requestData } from "@/lib/http-client";
 import type { ConfigurationGroup, Fabric, SavedConfiguration } from "@/types/domain";
 import { createInitialWorkspaceData, type WorkspaceData } from "./workspace-mode";
 
@@ -29,7 +29,7 @@ const createWorkspaceState: StateCreator<WorkspaceState> = (set, get) => ({
     if (!options?.background) set({ fabrics: [], configurations: [], groups: [], status: "loading", error: null });
     try {
       const [fabrics, configurations, groups] = await Promise.all([
-        requestData<Fabric[]>("/api/v1/fabrics?status=all"),
+        requestAllPages<Fabric>("/api/v1/fabrics?status=all"),
         requestData<SavedConfiguration[]>("/api/v1/configurations"),
         requestData<ConfigurationGroup[]>("/api/v1/configuration-groups"),
       ]);

@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
     await requireActor();
     const repositories = await getRepositories();
     const query = fabricListQuerySchema.parse(Object.fromEntries(request.nextUrl.searchParams));
-    const data = await repositories.fabrics.list({ query: query.q, status: query.status, limit: query.limit });
-    return NextResponse.json(apiSuccess(data, { count: data.length }));
+    const result = await repositories.fabrics.list({ query: query.q, status: query.status, limit: query.limit, page: query.page });
+    return NextResponse.json(apiSuccess(result.items, { page: query.page, limit: query.limit, total: result.total, hasMore: query.page * query.limit < result.total }));
   } catch (error) {
     const response = toErrorResponse(error); log("error", "fabrics.list_failed", { code: response.body.error.code });
     return NextResponse.json(response.body, { status: response.status });
