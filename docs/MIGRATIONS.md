@@ -25,4 +25,4 @@ Supabase migrations forward-only. Применённые файлы не ред�
 - `202608190001_complete_import_ledger.sql`: добавляет итоговые `skipped/failed` счётчики, безопасную стратегию `skip`, own-update RLS и audit trigger завершённого импорта.
 - `202608190002_grant_service_role_fixture_operations.sql`: выдаёт только узкие права, необходимые локальному E2E fixture setup/cleanup; user flows продолжают работать с обычным JWT и RLS.
 - `202608190003_fix_audit_trigger_table_branching.sql`: устраняет обращение общего audit-trigger к полям другой таблицы и безопасно разделяет fabric/configuration events.
-- 202608190004_harden_active_profile_rls.sql: централизует проверку активного профиля и запрещает деактивированным admin/tailor/employee прямой доступ к business tables и private Storage; rollback выполняется только новой forward-fix migration.
+- `202608190004_harden_active_profile_rls.sql`: централизует проверку активного профиля и запрещает деактивированным admin/tailor/employee прямой доступ к business tables и private Storage; rollback выполняется только новой forward-fix migration.
