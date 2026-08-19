@@ -1,5 +1,5 @@
 import type { FabricRepository } from "@/application/ports/fabric-repository";
-import { fabricInputSchema } from "@/schemas/fabric";
+import { fabricInputSchema, fabricPatchSchema } from "@/schemas/fabric";
 
 export type ImportRowError = { row: number; article?: string; message: string };
 export type FabricImportResult = {
@@ -40,7 +40,8 @@ export async function executeFabricImport(rows: Record<string, unknown>[], strat
         continue;
       }
       if (existing) {
-        const saved = await repository.update(existing.id, parsed.data, actorId);
+        const patch = fabricPatchSchema.parse(raw);
+        const saved = await repository.update(existing.id, patch, actorId);
         if (!saved) throw new Error("Ткань не найдена во время обновления");
         updated += 1;
       } else {

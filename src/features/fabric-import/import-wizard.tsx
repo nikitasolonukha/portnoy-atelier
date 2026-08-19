@@ -9,7 +9,7 @@ import { useWorkspace } from "@/features/workspace/workspace-store";
 import type { FabricImportResult } from "@/application/import/execute-import";
 import { applyColumnMapping, importFields, suggestColumnMapping, type ColumnMapping, type ImportField } from "@/lib/import-workflow";
 import { requestData } from "@/lib/http-client";
-import { fabricInputSchema } from "@/schemas/fabric";
+import { fabricInputSchema, fabricPatchSchema } from "@/schemas/fabric";
 import type { Fabric } from "@/types/domain";
 
 const usesSupabase = process.env.NEXT_PUBLIC_APP_MODE === "supabase";
@@ -98,7 +98,7 @@ export function ImportWorkspace() {
       const current = existing.get(article);
       try {
         if (current && strategy === "skip") { skipped += 1; continue; }
-        if (current) { const saved = await updateFabric(current.id, parsed.data); existing.set(article, saved); updated += 1; continue; }
+        if (current) { const saved = await updateFabric(current.id, fabricPatchSchema.parse(raw)); existing.set(article, saved); updated += 1; continue; }
         const now = new Date().toISOString();
         const fabric: Fabric = {
           ...parsed.data, weightGsm: parsed.data.weightGsm ?? 0, widthCm: parsed.data.widthCm ?? 0,

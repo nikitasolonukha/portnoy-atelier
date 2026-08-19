@@ -1,4 +1,4 @@
-import type { AppRole } from "@/types/auth";
+import type { AppRole, CurrentUser } from "@/types/auth";
 
 export type Permission =
   | "fabric:read"
@@ -25,4 +25,8 @@ const permissions: Record<AppRole, ReadonlySet<Permission>> = {
 
 export function can(role: AppRole, permission: Permission) {
   return permissions[role].has(permission);
+}
+
+export function canMutateConfiguration(user: CurrentUser, ownerId: string) {
+  return user.role === "admin" || user.id === ownerId;
 }

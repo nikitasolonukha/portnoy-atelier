@@ -50,7 +50,7 @@ pnpm container:down
 
 ## Architecture and handoff
 
-Start with `docs/ONBOARDING.md` and `AGENTS.md`. HTTP contract: `openapi/portnoy-v1.yaml`. DB source of truth: `supabase/migrations`. AI workflows: `.cursor/rules`, `.cursor/skills`, `.claude`.
+Start with `docs/ONBOARDING.md` and `AGENTS.md`. HTTP contract: `openapi/portnoy-v1.yaml`. Permission contract: `docs/PERMISSIONS.md`. DB source of truth: `supabase/migrations`. AI workflows: `.cursor/rules`, `.cursor/skills`, `.claude`.
 
 External Supabase/staging credentials are not committed. A production handoff must attach environment, migration, CI and role/RLS evidence described in `docs/RELEASE_CHECKLIST.md`.
 

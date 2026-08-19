@@ -7,7 +7,7 @@ import { FabricService } from "./fabric-service";
 function fakeRepository(seed = demoFabrics.slice(0, 2)): FabricRepository {
   let records = structuredClone(seed);
   return {
-    list: async () => records,
+    list: async () => ({ items: records, total: records.length }),
     findById: async (id) => records.find((item) => item.id === id) ?? null,
     findByArticle: async (article) => records.find((item) => item.article === article) ?? null,
     create: async (input, actorId) => {

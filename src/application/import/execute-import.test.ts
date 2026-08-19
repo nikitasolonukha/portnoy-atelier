@@ -67,6 +67,30 @@ describe("executeFabricImport", () => {
     expect(result.errors[1]?.message).toBe("Артикул повторяется в файле");
   });
 
+  it("preserves every unmapped field when updating an existing fabric", async () => {
+    const existing = { ...fabric("existing-1", "EX-1"), manufacturer: "Loro Piana", composition: "100% Wool", currency: "EUR" as const };
+    const target = repository({ "EX-1": existing });
+
+    await executeFabricImport([{ article: "EX-1", name: "Updated navy" }], "update", target, "actor-1");
+
+    expect(target.update).toHaveBeenCalledWith("existing-1", { article: "EX-1", name: "Updated navy" }, "actor-1");
+  });
+
+  it("updates a mapped optional field", async () => {
+    const target = repository({ "EX-1": fabric("existing-1", "EX-1") });
+
+    await executeFabricImport([{ article: "EX-1", name: "Updated", manufacturer: "Vitale Barberis" }], "update", target, "actor-1");
+
+    expect(target.update).toHaveBeenCalledWith("existing-1", { article: "EX-1", name: "Updated", manufacturer: "Vitale Barberis" }, "actor-1");
+  });
+
+  it("treats a mapped blank text cell as an explicit clear", async () => {
+    const target = repository({ "EX-1": fabric("existing-1", "EX-1") });
+
+    await executeFabricImport([{ article: "EX-1", name: "Updated", manufacturer: "" }], "update", target, "actor-1");
+
+    expect(target.update).toHaveBeenCalledWith("existing-1", { article: "EX-1", name: "Updated", manufacturer: "" }, "actor-1");
+  });
   it("converts repository failures into safe per-row results", async () => {
     const failing = repository({ "EX-1": fabric("missing", "EX-1") });
     vi.mocked(failing.update).mockResolvedValueOnce(null);

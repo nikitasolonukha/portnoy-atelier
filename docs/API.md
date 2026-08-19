@@ -1,30 +1,34 @@
 # API v1
 
-Базовый путь: `/api/v1`. Полный машиночитаемый контракт: `openapi/portnoy-v1.yaml`.
+Базовый путь: `/api/v1`. Полный контракт: `openapi/portnoy-v1.yaml`.
 
 ## Envelope
 
-Успех: `{ "data": ... }`. Коллекции могут содержать `meta`. Ошибка: `{ "error": { "code", "message", "details?" } }`.
+Успех: `{ "data": ... }`. Ошибка: `{ "error": { "code", "message", "details?" } }`. Внутренние SQL/stack/secrets не возвращаются. HTTP semantics: 201 create, 204 delete, 401 no session, 403 role denied, 404 absent, 409 conflict/in-use, 422 validation, 500 unexpected, 503 readiness.
 
-Коды стабильны и пригодны для UI. Внутренние SQL/stack/secrets никогда не входят в response. HTTP semantics: 201 create, 204 delete, 401 no session, 403 role denied, 404 absent, 409 conflict/in-use, 422 validation, 500 unexpected, 503 readiness.
+## Fabrics pagination
 
-## Ресурсы
+`GET /fabrics` принимает `page` (default 1), `limit` (default 100, max 200), `q` и `status`. Ответ содержит:
+
+```json
+{
+  "data": [],
+  "meta": { "page": 1, "limit": 100, "total": 0, "hasMore": false }
+}
+```
+
+Repository использует стабильную сортировку `updated_at DESC, id DESC`, exact count и bounded range. Текущий Stage 1 workspace контролируемо запрашивает все страницы по 200; hard limit не обходится огромным `limit`. Catalog, dashboard, import planning и configurator selector поэтому видят один полный набор. Для существенно большего production dataset следующий совместимый шаг — server-side UI pagination/search поверх уже существующего API-контракта.
+
+## Resources
 
 - `GET/POST /fabrics`
 - `GET/PATCH/DELETE /fabrics/{fabricId}`
+- `POST /fabrics/{fabricId}/assets`
+- `DELETE /fabrics/{fabricId}/assets/{assetId}`
+- `POST /fabric-imports`
 - `GET/POST /configurations`
-- `PATCH/DELETE /configurations/{configurationId}`
-- `GET /health` — liveness без проверки БД.
-- `GET /readiness` — проверяет выбранный adapter/БД.
+- `GET/PATCH/DELETE /configurations/{configurationId}`
+- `GET /configuration-groups`
+- `GET /health` and `GET /readiness`
 
-## Auth и роли
-
-Cookie-based Supabase session обновляет `src/proxy.ts`. Route handler повторно получает verified user. RLS остаётся последним обязательным барьером.
-
-- `employee`: чтение каталога, свои конфигурации.
-- `tailor`: чтение/изменение тканей, рабочие конфигурации.
-- `admin`: полный Stage 1 доступ, включая delete при отсутствии FK-конфликта.
-
-## Изменение контракта
-
-Добавление optional поля совместимо. Удаление/переименование/смена типа требует `/api/v2`. Обновляйте OpenAPI, integration tests и этот документ в одном change set.
+Cookie-based Supabase session обновляется proxy; handler повторно получает verified actor. Фактические роли описаны в `docs/PERMISSIONS.md`. RLS остаётся последним обязательным барьером.

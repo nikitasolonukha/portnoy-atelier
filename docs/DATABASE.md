@@ -18,7 +18,7 @@ PostgreSQL enforces nonblank article/name, nonnegative numeric/count fields, JSO
 
 ## RLS
 
-All exposed tables have RLS. Auth actor is derived from `auth.uid()` and active profile. Employees read catalog and own configs; tailors manage fabric workflow; admins have Stage 1 administration. Import ledger rows can be created and updated only by their staff owner. Direct API role checks improve errors but never replace RLS.
+All exposed tables have RLS. `public.has_active_profile()` centrally requires an active profile for business access; this is re-evaluated on every query, so a still-valid JWT cannot bypass deactivation. Employees read catalog and own configs; tailors manage the fabric workflow and read all configs but mutate only their own; admins have Stage 1 administration. See `docs/PERMISSIONS.md`. Import ledger rows can be created and updated only by their staff owner. Direct API role checks improve errors but never replace RLS.
 
 ## Storage
 

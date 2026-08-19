@@ -11,14 +11,16 @@ export class SupabaseFabricRepository implements FabricRepository {
   constructor(private readonly client: SupabaseClient) {}
 
   async list(query: FabricListQuery = {}) {
-    let request = this.client.from("fabrics").select(fabricSelection).order("updated_at", { ascending: false }).limit(Math.min(query.limit ?? 100, 200));
+    const limit = Math.min(query.limit ?? 100, 200);
+    const page = query.page ?? 1;
+    const from = (page - 1) * limit;
+    let request = this.client.from("fabrics").select(fabricSelection, { count: "exact" }).order("updated_at", { ascending: false }).order("id", { ascending: false }).range(from, from + limit - 1);
     if (query.status === "active" || !query.status) request = request.eq("is_active", true);
     if (query.status === "archived") request = request.eq("is_active", false);
     if (query.query) request = request.or(`article.ilike.%${query.query}%,name.ilike.%${query.query}%,manufacturer.ilike.%${query.query}%`);
-    if (query.cursor) request = request.lt("updated_at", query.cursor);
-    const { data, error } = await request;
+    const { data, error, count } = await request;
     if (error) throw new ApiProblem("fabric_list_failed", "Не удалось загрузить ткани", 500);
-    return ((data ?? []) as unknown as FabricRow[]).map(mapFabricRow);
+    return { items: ((data ?? []) as unknown as FabricRow[]).map(mapFabricRow), total: count ?? 0 };
   }
 
   async findById(id: string) {

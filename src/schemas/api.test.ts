@@ -7,6 +7,7 @@ describe("fabricListQuerySchema", () => {
       q: "wool",
       status: "active",
       limit: 25,
+      page: 1,
     });
   });
 
@@ -15,6 +16,7 @@ describe("fabricListQuerySchema", () => {
     { limit: "0" },
     { limit: "201" },
     { limit: "not-a-number" },
+    { page: "0" },
   ])("rejects invalid input: %o", (input) => {
     expect(() => fabricListQuerySchema.parse(input)).toThrow();
   });

@@ -2,31 +2,37 @@
 
 Дата локальной проверки: 2026-08-19.
 
-Итог: **release candidate и GitHub CI READY; production deployment NOT READY** до появления staging/backup/observability evidence. Это ограничение окружения, а не скрытая заглушка функциональности.
+## Verdict
 
-## Подтверждено локально
+**Stage 1 core (без 3D): READY.** External production deployment остаётся gated до staging, backup/restore, observability и release-owner evidence. Это operational gate, а не незавершённая функция Stage 1.
 
-- `pnpm verify`: lint, strict TypeScript, 53 unit-теста, 9 API integration-тестов и production build прошли.
-- Coverage: statements/lines 94.09%, branches 87.70%, functions 87.09% при обязательном пороге 80%.
-- `pnpm test:e2e`: 62 passed, 2 intentionally not-applicable skips для mobile-nav проверки на viewport шире 900px; desktop, iPad portrait/landscape и mobile входят в matrix, включая CSV/XLSX/legacy XLS.
-- `pnpm db:reset`: чистая БД воспроизводимо применяет шесть migrations и seed.
-- `pnpm db:test`: 31/31 pgTAP assertions прошли после clean reset, включая регрессию audit-trigger.
-- `pnpm db:types`: типы воспроизводимо генерируются из локальной схемы.
-- `pnpm test:e2e:supabase`: 5/5 на production build с реальными локальными Supabase Auth, JWT/RLS, Postgres и private Storage.
-- Ролевая матрица подтверждает employee read-only, tailor create/update без delete и admin delete одновременно на UI/API и прямом RLS уровне.
-- Полный Supabase flow подтверждает fabric create/edit/reload, photo/texture replace/reload, import result, configuration create/reload/update without duplicate, duplicate/compare и logout.
-- Docker image и compose service собираются; read-only container возвращает 200 на liveness/readiness.
-- `pnpm audit --prod --audit-level high`: известных уязвимостей нет после обновления Next.js до 16.3.1 и SheetJS до 0.20.3.
-- Secret/debug/placeholder/3D dependency scan не обнаружил credentials, production-заглушек, debug statements или 3D runtime dependencies.
-- Auth proxy, role checks, RLS, private Storage, input validation, safe errors, redacted structured logs и security headers присутствуют в коде.
-- Upload изображений проверяет размер, число файлов, MIME и magic bytes; orphaned Storage object удаляется при ошибке metadata insert.
-- GitHub Actions run `32195419805`: `quality` pass, demo `e2e` pass, real `supabase` pass; draft PR #5 содержит полный reviewable diff.
+## Verified locally
 
-## Что ещё блокирует production deployment
+- `pnpm verify`: lint, strict TypeScript, 62 unit tests, 9 integration tests, coverage gate, demo production build and standalone runtime passed.
+- Coverage: statements 94.11%, branches 87.80%, functions 87.09%, lines 94.11%.
+- `pnpm test:e2e`: 70 passed, 2 expected viewport-not-applicable skips across desktop/iPad portrait/iPad landscape/mobile.
+- `pnpm db:reset`: all 7 forward-only migrations and seed applied from an empty local database.
+- `pnpm db:test`: 37/37 pgTAP assertions.
+- `pnpm db:types`: reproducibly generated `has_active_profile` and current schema types.
+- `pnpm test:e2e:supabase`: 13/13 with real Auth JWT, RLS, Postgres and private Storage.
+- 250-fabric dataset: page 2 record, backend search, UI catalog search, total and configurator selector verified; teardown removes all generated rows.
+- Import update preserves unmapped manufacturer/composition/currency, updates mapped values and explicitly clears a mapped blank text cell.
+- Inactive admin/tailor/employee lose direct access to business tables and `fabric-assets` Storage without waiting for JWT expiry.
+- Full real flow covers create, photo/texture upload and reload, texture replacement, photo/texture deletion, edit, archive/reload/filter/restore, import, configuration create/reload/repeated update, duplicate independence, compare, used-fabric 409 and protected logout.
+- pnpm audit --prod --audit-level high: no known vulnerabilities.
+- Secret/service-role/client scan found no committed credentials or client-exposed service key. No 3D runtime dependencies exist.
 
-- Нет подключённого staging Supabase и доказательства применения migration на нём.
-- Локальная real-Supabase матрица выполнена, но ещё не повторена против staging.
-- Нет staging URL, настроенного alert destination и назначенного incident owner.
-- Нужны подтверждённые backup/restore и release owner.
+## Confirmed existing behavior, not reimplemented
 
-Production нельзя объявлять READY только по локальному коду. Источник правды для оставшихся действий — `docs/TASKS.md` и `docs/RELEASE_CHECKLIST.md`.
+- Invalid compare IDs already produced an explicit empty state and never fell back to arbitrary configurations; E2E now locks it down.
+- Import/create/edit actions and direct routes already respected role-aware UX; direct-route/API regressions now prove it.
+- Texture replacement already removed the previous object/metadata with rollback behavior.
+- No fabric duplicate action existed, so no half-working action was retained.
+- Compare already included fabric as a first-class difference row.
+
+## External deployment gates
+
+- Apply migrations and role/RLS smoke to a linked staging Supabase project.
+- Verify backup restore and record rollback/release owner.
+- Configure production logs, alert destination and incident owner.
+- Attach green GitHub CI and staging URL to `docs/RELEASE_CHECKLIST.md` before production approval.

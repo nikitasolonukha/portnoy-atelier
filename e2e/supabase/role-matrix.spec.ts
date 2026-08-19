@@ -1,17 +1,32 @@
 import { expect, test } from "@playwright/test";
-import { loginAs } from "./helpers";
+import { authenticatedClient, loginAs, serviceClient } from "./helpers";
 
-test("employee UI and API are read-only for fabrics", async ({ page }) => {
-  await loginAs(page, "employee");
-  await page.goto("/fabrics");
-  await expect(page.getByRole("link", { name: "Добавить ткань" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Импорт" })).toHaveCount(0);
-  const result = await page.evaluate(async () => {
-    const response = await fetch("/api/v1/fabrics", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ article: "E2E-EMPLOYEE", name: "Forbidden" }) });
-    return { status: response.status, body: await response.json() };
-  });
-  expect(result.status).toBe(403);
-  expect(result.body.error.code).toBe("forbidden");
+test("employee UI, direct restricted routes and API are read-only for fabrics", async ({ page }) => {
+  const service = serviceClient();
+  const admin = await authenticatedClient("admin");
+  const article = `E2E-EMPLOYEE-READONLY-${Date.now()}`;
+  const { data: fabric, error } = await admin.from("fabrics").insert({ article, name: "Employee read-only fixture" }).select("id").single();
+  if (error) throw error;
+  try {
+    await loginAs(page, "employee");
+    await page.goto("/fabrics");
+    await expect(page.getByRole("link", { name: "Добавить ткань" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Импорт" })).toHaveCount(0);
+    await page.goto("/fabrics/import");
+    await expect(page.getByRole("heading", { name: "Недостаточно прав" })).toBeVisible();
+    await page.goto("/fabrics/new");
+    await expect(page.getByRole("heading", { name: "Недостаточно прав" })).toBeVisible();
+    await page.goto(`/fabrics/${fabric.id}/edit`);
+    await expect(page.getByRole("heading", { name: "Недостаточно прав" })).toBeVisible();
+    const result = await page.evaluate(async () => {
+      const response = await fetch("/api/v1/fabrics", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ article: "E2E-EMPLOYEE", name: "Forbidden" }) });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(result.status).toBe(403);
+    expect(result.body.error.code).toBe("forbidden");
+  } finally {
+    await service.from("fabrics").delete().eq("id", fabric.id);
+  }
 });
 
 test("tailor can create/update but cannot delete fabrics", async ({ page }) => {

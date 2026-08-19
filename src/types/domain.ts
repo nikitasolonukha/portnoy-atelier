@@ -52,6 +52,7 @@ export type SavedConfiguration = {
   name: string;
   fabricId: string | null;
   settings: Record<string, string>;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 };
