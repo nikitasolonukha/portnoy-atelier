@@ -40,6 +40,10 @@ export function resetConfiguratorDraft(state: ConfiguratorDraft): ConfiguratorDr
   return { ...state, ...snapshot(state.baseline), status: "clean", error: null };
 }
 
+export function shouldNavigateToCanonicalConfiguration(currentId: string | null, savedId: string) {
+  return currentId !== savedId;
+}
+
 export function markConfiguratorSaved(state: ConfiguratorDraft, saved: SavedConfiguration): ConfiguratorDraft {
   const current = { name: saved.name, fabricId: saved.fabricId ?? "", settings: { ...saved.settings } };
   return { ...state, ...current, id: saved.id, createdAt: saved.createdAt, baseline: snapshot(current), status: "clean", error: null };

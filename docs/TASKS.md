@@ -11,6 +11,7 @@
 - [x] Unit coverage gate, API integration suite, pgTAP contract, desktop/iPad/mobile E2E.
 - [x] CI includes quality, demo E2E and real local-Supabase E2E gates; standalone Docker, health/readiness, runbook and release checklist are versioned.
 - [x] Cursor rules/skills, Claude skills/commands/agent, AGENTS and AI handoff.
+- [x] Configurator navigates to its canonical URL only after the first save; repeated saves are covered by a deterministic unit regression and the iPad Playwright flow.
 
 ## External activation checklist
 

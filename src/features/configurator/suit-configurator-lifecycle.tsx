@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, RotateCcw, Save } from "lucide-react";
 import { Button, PageHeading } from "@/components/ui/primitives";
 import { useWorkspace } from "@/features/workspace/workspace-store";
-import { createConfiguratorDraft, isConfiguratorDirty, markConfiguratorSaved, resetConfiguratorDraft, withConfiguratorEdit } from "./configurator-state";
+import { createConfiguratorDraft, isConfiguratorDirty, markConfiguratorSaved, resetConfiguratorDraft, shouldNavigateToCanonicalConfiguration, withConfiguratorEdit } from "./configurator-state";
 
 export function SuitConfigurator({ configurationId }: { configurationId?: string }) {
   const router = useRouter();
@@ -59,7 +59,7 @@ export function SuitConfigurator({ configurationId }: { configurationId?: string
         settings: draft.settings, createdAt: draft.createdAt ?? now, updatedAt: now,
       });
       setDraft((current) => markConfiguratorSaved(current, saved));
-      router.replace(`/configurator/${encodeURIComponent(saved.id)}`);
+      if (shouldNavigateToCanonicalConfiguration(draft.id, saved.id)) router.replace(`/configurator/${encodeURIComponent(saved.id)}`);
     } catch (cause) {
       setDraft((current) => ({ ...current, status: "error", error: cause instanceof Error ? cause.message : "Не удалось сохранить конфигурацию" }));
     }
