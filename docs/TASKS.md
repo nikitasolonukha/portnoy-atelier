@@ -13,7 +13,7 @@
 
 ## External activation checklist
 
-- [ ] Push `fix/final-stage-one-hardening` and open a draft PR.
+- [x] `fix/final-stage-one-hardening` pushed; draft PR [#7](https://github.com/nikitasolonukha/portnoy-atelier/pull/7) targets `main`.
 - [ ] Obtain green GitHub Actions evidence for quality, demo E2E and Supabase jobs on the final HEAD.
 - [ ] Create/link staging Supabase and populate secrets outside git.
 - [ ] Apply migrations and repeat admin/tailor/employee browser + direct RLS matrix on staging.
