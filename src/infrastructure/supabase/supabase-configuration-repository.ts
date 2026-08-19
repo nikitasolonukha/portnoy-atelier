@@ -43,11 +43,15 @@ export class SupabaseConfigurationRepository implements ConfigurationRepository 
   }
 }
 
-export async function loadConfigurationGroups(client: SupabaseClient): Promise<ConfigurationGroup[]> {
-  const { data, error } = await client.from("configuration_groups").select("*,configuration_options(*)").order("sort_order");
-  if (error) throw new ApiProblem("configuration_groups_failed", "Не удалось загрузить опции конфигуратора", 500);
-  return ((data ?? []) as unknown as ConfigurationGroupRow[]).map((row) => ({
-    id: row.id, key: row.key, name: row.name, sortOrder: row.sort_order, isActive: row.is_active,
-    options: row.configuration_options.sort((a, b) => a.sort_order - b.sort_order).map((option) => ({ id: option.id, groupKey: row.key, key: option.key, name: option.name, description: option.description ?? undefined, sortOrder: option.sort_order, isActive: option.is_active })),
+export function filterAndMapActiveConfigurationGroups(rows: ConfigurationGroupRow[]): ConfigurationGroup[] {
+  return rows.filter((row) => row.is_active).map((row) => ({
+    id: row.id, key: row.key, name: row.name, sortOrder: row.sort_order, isActive: true,
+    options: row.configuration_options.filter((option) => option.is_active).sort((a, b) => a.sort_order - b.sort_order).map((option) => ({ id: option.id, groupKey: row.key, key: option.key, name: option.name, description: option.description ?? undefined, sortOrder: option.sort_order, isActive: true })),
   }));
+}
+
+export async function loadConfigurationGroups(client: SupabaseClient): Promise<ConfigurationGroup[]> {
+  const { data, error } = await client.from("configuration_groups").select("*,configuration_options(*)").eq("is_active", true).eq("configuration_options.is_active", true).order("sort_order");
+  if (error) throw new ApiProblem("configuration_groups_failed", "Не удалось загрузить опции конфигуратора", 500);
+  return filterAndMapActiveConfigurationGroups((data ?? []) as unknown as ConfigurationGroupRow[]);
 }
