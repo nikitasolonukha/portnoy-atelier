@@ -15,5 +15,10 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 120_000,
   },
-  projects: [{ name: "supabase-chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "supabase-desktop", use: { ...devices["Desktop Chrome"] } },
+    { name: "supabase-ipad-landscape", testMatch: /responsive-smoke\.spec\.ts/, use: { ...devices["iPad Pro 11"], viewport: { width: 1194, height: 834 } } },
+    { name: "supabase-ipad-portrait", testMatch: /responsive-smoke\.spec\.ts/, use: { ...devices["iPad Pro 11"] } },
+    { name: "supabase-mobile", testMatch: /responsive-smoke\.spec\.ts/, use: { ...devices["Pixel 7"] } },
+  ],
 });

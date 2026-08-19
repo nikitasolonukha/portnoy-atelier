@@ -87,6 +87,7 @@ test("real Supabase Stage 1 flow persists through refresh, direct URLs and logou
   await goToSummary(page);
   await page.getByLabel("Название конфигурации").fill(`${updatedConfigurationName} copy`);
   await page.getByRole("button", { name: "Сохранить изменения" }).click();
+  await expect(page.getByRole("status")).toHaveText("Все изменения сохранены");
   await page.goto("/configurations");
   await page.getByRole("checkbox", { name: `Выбрать ${updatedConfigurationName} для сравнения` }).check();
   await page.getByRole("checkbox", { name: `Выбрать ${updatedConfigurationName} copy для сравнения` }).check();
