@@ -21,6 +21,6 @@ export const demoGroups: ConfigurationGroup[] = [
 ];
 
 export const demoConfigurations: SavedConfiguration[] = [
-  { id: "c1", name: "Городской синий", fabricId: "f1", settings: { jacket: "single", lapel: "notch", buttons: "two", pockets: "flap", trousers: "classic", vest: "none" }, createdAt: "2026-08-14T11:00:00Z", updatedAt: "2026-08-17T14:20:00Z" },
-  { id: "c2", name: "Клетка для приёма", fabricId: "f2", settings: { jacket: "double", lapel: "peak", buttons: "two", pockets: "jetted", trousers: "pleated", vest: "single" }, createdAt: "2026-08-15T11:00:00Z", updatedAt: "2026-08-17T17:45:00Z" },
+  { id: "c1", createdBy: "00000000-0000-0000-0000-000000000001", name: "Городской синий", fabricId: "f1", settings: { jacket: "single", lapel: "notch", buttons: "two", pockets: "flap", trousers: "classic", vest: "none" }, createdAt: "2026-08-14T11:00:00Z", updatedAt: "2026-08-17T14:20:00Z" },
+  { id: "c2", createdBy: "00000000-0000-0000-0000-000000000001", name: "Клетка для приёма", fabricId: "f2", settings: { jacket: "double", lapel: "peak", buttons: "two", pockets: "jetted", trousers: "pleated", vest: "single" }, createdAt: "2026-08-15T11:00:00Z", updatedAt: "2026-08-17T17:45:00Z" },
 ];

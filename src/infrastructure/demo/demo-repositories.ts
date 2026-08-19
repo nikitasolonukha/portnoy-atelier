@@ -25,7 +25,7 @@ export class DemoFabricRepository implements FabricRepository {
 export class DemoConfigurationRepository implements ConfigurationRepository {
   async list() { return configurations; }
   async findById(id: string) { return configurations.find((item) => item.id === id) ?? null; }
-  async create(input: ConfigurationCreate) { const now = new Date().toISOString(); const record: SavedConfiguration = { ...input, id: crypto.randomUUID(), createdAt: now, updatedAt: now }; configurations = [record, ...configurations]; return record; }
+  async create(input: ConfigurationCreate, actorId: string) { const now = new Date().toISOString(); const record: SavedConfiguration = { ...input, id: crypto.randomUUID(), createdBy: actorId, createdAt: now, updatedAt: now }; configurations = [record, ...configurations]; return record; }
   async update(id: string, input: Partial<ConfigurationCreate>) { const current = configurations.find((item) => item.id === id); if (!current) return null; Object.assign(current, input, { updatedAt: new Date().toISOString() }); return current; }
   async remove(id: string) { const size = configurations.length; configurations = configurations.filter((item) => item.id !== id); return size !== configurations.length; }
 }

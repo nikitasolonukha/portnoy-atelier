@@ -8,7 +8,7 @@ function fakeRepository(): ConfigurationRepository {
   return {
     list: async () => records,
     findById: async (id) => records.find((item) => item.id === id) ?? null,
-    create: async (input, actorId) => ({ ...input, id: `new-${actorId}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }),
+    create: async (input, actorId) => ({ ...input, id: `new-${actorId}`, createdBy: actorId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }),
     update: async () => null,
     remove: async () => false,
   };

@@ -5,7 +5,7 @@ import type { ConfigurationGroup, SavedConfiguration } from "@/types/domain";
 import type { ConfigurationGroupRow, ConfigurationRow } from "./configuration-types";
 
 function mapConfiguration(row: ConfigurationRow): SavedConfiguration {
-  return { id: row.id, name: row.name, fabricId: row.fabric_id, settings: row.settings, createdAt: row.created_at, updatedAt: row.updated_at };
+  return { id: row.id, name: row.name, fabricId: row.fabric_id, settings: row.settings, createdBy: row.created_by, createdAt: row.created_at, updatedAt: row.updated_at };
 }
 
 export class SupabaseConfigurationRepository implements ConfigurationRepository {
