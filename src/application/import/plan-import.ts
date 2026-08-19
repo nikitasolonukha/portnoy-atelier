@@ -1,4 +1,4 @@
-import { fabricInputSchema } from "@/schemas/fabric";
+import { fabricInputSchema, fabricPatchSchema } from "@/schemas/fabric";
 
 export type DuplicateStrategy = "skip" | "update";
 
@@ -21,7 +21,7 @@ export function planFabricImport(rows: Record<string, unknown>[], existingArticl
     }
     seen.add(article);
     if (existingArticles.has(article)) {
-      if (strategy === "update") update.push(parsed.data);
+      if (strategy === "update") update.push(fabricPatchSchema.parse(row));
       // The skip strategy is a valid no-op, not a validation failure.
       return;
     }
