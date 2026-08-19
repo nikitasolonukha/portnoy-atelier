@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { goToSummary, loginAs, png } from "./helpers";
 
 test("real Supabase Stage 1 flow persists through refresh, direct URLs and logout", async ({ page }) => {
+  test.setTimeout(120_000);
   const suffix = Date.now();
   const article = `E2E-FLOW-${suffix}`;
   const importArticle = `E2E-IMPORT-${suffix}`;
@@ -25,7 +26,7 @@ test("real Supabase Stage 1 flow persists through refresh, direct URLs and logou
   await page.locator('input[type="file"][multiple]').setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: png });
   await page.locator('input[type="file"]:not([multiple])').setInputFiles({ name: "texture.png", mimeType: "image/png", buffer: png });
   await page.getByRole("button", { name: "Сохранить ткань" }).click();
-  await expect(page).toHaveURL(/\/fabrics\/[^/]+$/);
+  await expect(page).toHaveURL(/\/fabrics\/[0-9a-f-]{36}$/);
   const fabricUrl = page.url();
   await expect(page.getByRole("heading", { name: fabricName })).toBeVisible();
   await expect(page.getByRole("img", { name: "photo.png" })).toBeVisible();
@@ -94,11 +95,42 @@ test("real Supabase Stage 1 flow persists through refresh, direct URLs and logou
   await page.getByRole("button", { name: "Сравнить 2/2" }).click();
   await expect(page.locator("[data-compare-row]")).toHaveCount(7);
 
+  await page.goto(configurationUrl);
+  await goToSummary(page);
+  await expect(page.getByLabel("Название конфигурации")).toHaveValue(updatedConfigurationName);
+
+  await page.goto(fabricUrl);
+  await page.getByRole("button", { name: "Архивировать" }).click();
+  await expect(page.getByText("В архиве", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("В архиве", { exact: true })).toBeVisible();
+  await page.goto("/fabrics");
+  await page.getByLabel("Статус").selectOption("archived");
+  await page.getByLabel("Поиск тканей").fill(article);
+  await page.getByRole("link").filter({ has: page.getByRole("heading", { name: updatedFabricName, exact: true }) }).click();
+  await page.getByRole("button", { name: "Вернуть из архива" }).click();
+  await expect(page.getByText("Активна", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: "Редактировать" }).click();
+  await page.getByRole("button", { name: "Удалить photo.png" }).click();
+  await page.getByRole("button", { name: "Удалить текстуру" }).click();
+  await page.getByRole("button", { name: "Сохранить изменения" }).click();
+  await expect(page).toHaveURL(fabricUrl);
+  await page.reload();
+  await expect(page.getByRole("img", { name: "photo.png" })).toHaveCount(0);
+  await expect(page.getByRole("img", { name: "texture-replaced.png" })).toHaveCount(0);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Удалить", exact: true }).click();
+  const deleteConflict = page.getByRole("alert").filter({ hasText: "используется в конфигурации" });
+  await expect(deleteConflict).toContainText("используется в конфигурации");
+  await expect(deleteConflict).toContainText("Архивируйте ткань вместо удаления");
+
   await page.getByRole("button", { name: "Выйти" }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
-  expect(consoleErrors).toEqual([]);
+  expect(consoleErrors.filter((message) => !message.includes("409 (Conflict)"))).toEqual([]);
   expect(serverErrors).toEqual([]);
-  expect(fabricUrl).toMatch(/\/fabrics\/[^/]+$/);
+  expect(fabricUrl).toMatch(/\/fabrics\/[0-9a-f-]{36}$/);
 });

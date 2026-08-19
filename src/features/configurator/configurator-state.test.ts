@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createConfiguratorDraft, isConfiguratorDirty, markConfiguratorSaved, shouldNavigateToCanonicalConfiguration } from "./configurator-state";
+import { createConfiguratorDraft, isConfiguratorDirty, markConfiguratorSaved, resetConfiguratorDraft, shouldNavigateToCanonicalConfiguration, withConfiguratorEdit } from "./configurator-state";
 
 const defaults = { jacket: "single", lapel: "notch" };
 
@@ -14,6 +14,12 @@ describe("configurator state model", () => {
     const state = createConfiguratorDraft({ id: "cfg-1", name: "Navy", fabricId: "fabric-1", settings: defaults, createdBy: "owner", createdAt: "a", updatedAt: "b" }, "", {});
     expect(isConfiguratorDirty({ ...state, name: "Navy updated" })).toBe(true);
     expect(isConfiguratorDirty({ ...state, settings: { ...state.settings, lapel: "peak" } })).toBe(true);
+  });
+
+  it("resets edited values to the saved baseline", () => {
+    const source = { id: "cfg-1", name: "Navy", fabricId: "fabric-1", settings: defaults, createdBy: "owner", createdAt: "a", updatedAt: "b" };
+    const edited = withConfiguratorEdit(createConfiguratorDraft(source, "", {}), { name: "Changed", settings: { ...defaults, lapel: "peak" } });
+    expect(resetConfiguratorDraft(edited)).toMatchObject({ name: "Navy", settings: defaults, status: "clean", error: null });
   });
 
   it("adopts the canonical id and becomes clean after first save", () => {

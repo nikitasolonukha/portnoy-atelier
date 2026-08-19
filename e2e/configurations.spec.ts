@@ -38,7 +38,7 @@ test("duplicate opens an independent canonical copy", async ({ page }) => {
   await expect(page).toHaveURL(/\/configurator\/[^/?]+$/);
   const originalUrl = page.url();
   await page.goto("/configurations");
-  await page.getByRole("button", { name: "Дублировать Городской синий" }).click();
+  await page.getByRole("button", { name: "Дублировать Городской синий", exact: true }).click();
   await expect(page).toHaveURL(/\/configurator\/[^/?]+$/);
   expect(page.url()).not.toBe(originalUrl);
   await goToSummary(page);
@@ -72,4 +72,10 @@ test("dirty draft warns before browser reload", async ({ page }) => {
   await page.reload({ waitUntil: "domcontentloaded", timeout: 2_000 }).catch(() => undefined);
   expect(warned).toBe(true);
   await expect(page.getByRole("status")).toHaveText("Есть несохранённые изменения");
+});
+test("invalid compare IDs show an explicit empty state instead of fallback records", async ({ page }) => {
+  await page.goto("/configurations/compare?left=missing-left&right=missing-right");
+  await expect(page.getByRole("alert").filter({ has: page.getByRole("heading", { name: "Нужно выбрать две разные конфигурации" }) })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Сравнение вариантов" })).toHaveCount(0);
+  await expect(page.locator("[data-compare-row]")).toHaveCount(0);
 });

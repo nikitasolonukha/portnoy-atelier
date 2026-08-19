@@ -16,17 +16,24 @@ test("admin creates and archives a fabric", async ({ page }) => {
   await expect(page.getByText("В архиве", { exact: true })).toBeVisible();
 });
 
-test("CSV import maps columns, previews and adds all valid rows", async ({ page }) => {
+test("CSV import maps columns, previews and adds all valid rows", async ({ page }, testInfo) => {
+  const suffix = `${Date.now()}-${testInfo.project.name}`;
+  const firstArticle = `CSV-${suffix}-1`;
+  const secondArticle = `CSV-${suffix}-2`;
   await page.goto("/fabrics/import");
-  await page.locator('input[type="file"]').setInputFiles("e2e/fixtures/fabrics.csv");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "fabrics.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(`SKU,Title,Brand\n${firstArticle},Test Navy Fresco,Test Mill\n${secondArticle},Test Grey Flannel,Test Mill`, "utf8"),
+  });
   await expect(page.getByRole("heading", { name: "1. Сопоставление колонок" })).toBeVisible();
   await page.getByRole("button", { name: "Проверить строки" }).click();
-  await expect(page.getByText("CSV-9001", { exact: true })).toBeVisible();
+  await expect(page.getByText(firstArticle.toUpperCase(), { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /Импортировать 2 строк/ }).click();
   await expect(page.getByRole("heading", { name: "Импорт завершён" })).toBeVisible();
   await expect(page.getByText(/Создано: 2\. Обновлено: 0\. Пропущено: 0\. Ошибок: 0\./)).toBeVisible();
   await page.getByRole("link", { name: "Открыть каталог" }).click();
-  await page.getByPlaceholder("Артикул, название, фабрика").fill("CSV-9001");
+  await page.getByPlaceholder("Артикул, название, фабрика").fill(firstArticle);
   await expect(page.getByRole("heading", { name: "Test Navy Fresco" })).toBeVisible();
 });
 
@@ -51,4 +58,20 @@ test("XLSX and legacy XLS imports use the same validated workflow", async ({ pag
     await page.getByRole("button", { name: /Импортировать 1 строк/ }).click();
     await expect(page.getByText(/Создано: 1\. Обновлено: 0\. Пропущено: 0\. Ошибок: 0\./)).toBeVisible();
   }
+});
+test("manual column mapping imports unknown headers through the validated workflow", async ({ page }) => {
+  const article = `MANUAL-${Date.now()}`;
+  await page.goto("/fabrics/import");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "manual.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(`Code,Label,Mass\n${article},Manually mapped wool,280`, "utf8"),
+  });
+  await page.getByRole("combobox", { name: "Code" }).selectOption("article");
+  await page.getByRole("combobox", { name: "Label" }).selectOption("name");
+  await page.getByRole("combobox", { name: "Mass" }).selectOption("weightGsm");
+  await page.getByRole("button", { name: "Проверить строки" }).click();
+  await expect(page.getByText(article, { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Импортировать 1 строк" }).click();
+  await expect(page.getByText(/Создано: 1\. Обновлено: 0\. Пропущено: 0\. Ошибок: 0\./)).toBeVisible();
 });
