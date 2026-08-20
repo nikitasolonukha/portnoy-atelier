@@ -73,8 +73,16 @@ export class SupabaseFabricRepository implements FabricRepository {
 
   async remove(id: string) {
     const { error, count } = await this.client.from("fabrics").delete({ count: "exact" }).eq("id", id);
-    if (error?.code === "23503") throw new ApiProblem("fabric_in_use", "Ткань используется в конфигурации", 409);
+    if (error?.code === "23503") {
+      throw new ApiProblem("fabric_in_use", "Ткань используется в конфигурации. Архивируйте ткань вместо удаления", 409);
+    }
     if (error) throw new ApiProblem("fabric_delete_failed", "Не удалось удалить ткань", 500);
-    return Boolean(count);
+    if (count) return true;
+    // RLS silently blocks delete when configurations still reference the fabric.
+    const existing = await this.findById(id);
+    if (existing) {
+      throw new ApiProblem("fabric_in_use", "Ткань используется в конфигурации. Архивируйте ткань вместо удаления", 409);
+    }
+    return false;
   }
 }

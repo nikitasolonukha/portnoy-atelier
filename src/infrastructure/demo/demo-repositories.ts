@@ -2,24 +2,39 @@ import type { ConfigurationCreate, ConfigurationRepository } from "@/application
 import type { FabricListQuery, FabricRepository } from "@/application/ports/fabric-repository";
 import { filterFabrics } from "@/lib/catalog";
 import { demoConfigurations, demoFabrics, demoGroups } from "@/lib/demo-data";
+import { buildImportedFabric, photoAssetsFromUrl, swatchForColor } from "@/lib/fabric-from-import";
 import type { FabricData } from "@/schemas/fabric";
 import type { Fabric, SavedConfiguration } from "@/types/domain";
 
 let fabrics = structuredClone(demoFabrics);
 let configurations = structuredClone(demoConfigurations);
 
+export function resetDemoData() {
+  fabrics = structuredClone(demoFabrics);
+  configurations = structuredClone(demoConfigurations);
+}
+
 export class DemoFabricRepository implements FabricRepository {
   async list(query: FabricListQuery = {}) { const matches = filterFabrics(fabrics, { query: query.query, status: query.status }); const limit = Math.min(query.limit ?? 100, 200); const from = ((query.page ?? 1) - 1) * limit; return { items: matches.slice(from, from + limit), total: matches.length }; }
   async findById(id: string) { return fabrics.find((item) => item.id === id) ?? null; }
   async findByArticle(article: string) { return fabrics.find((item) => item.article === article) ?? null; }
   async create(input: FabricData) {
-    const now = new Date().toISOString();
-    const fabric: Fabric = { id: crypto.randomUUID(), article: input.article, name: input.name, manufacturer: input.manufacturer || "", collection: input.collection || "", composition: input.composition || "", mainColor: input.mainColor || "", pattern: input.pattern || "", weightGsm: input.weightGsm ?? 0, widthCm: input.widthCm ?? 0, pricePerMeter: input.pricePerMeter ?? 0, currency: input.currency ?? "RUB", description: input.description || "", isActive: true, swatch: "charcoal", createdAt: now, updatedAt: now };
+    const fabric = buildImportedFabric(input);
     fabrics = [fabric, ...fabrics]; return fabric;
   }
-  async update(id: string, input: Partial<FabricData>) { const current = fabrics.find((item) => item.id === id); if (!current) return null; Object.assign(current, input, { updatedAt: new Date().toISOString() }); return current; }
+  async update(id: string, input: Partial<FabricData>, _actorId?: string) {
+    const current = fabrics.find((item) => item.id === id);
+    if (!current) return null;
+    const { imageUrl, ...rest } = input;
+    const assets = photoAssetsFromUrl(imageUrl);
+    Object.assign(current, rest, {
+      ...(assets ? { assets, swatch: swatchForColor(input.mainColor || current.mainColor) } : {}),
+      updatedAt: new Date().toISOString(),
+    });
+    return current;
+  }
   async archive(id: string) { const current = fabrics.find((item) => item.id === id); if (!current) return false; current.isActive = false; return true; }
-  async remove(id: string) { if (configurations.some((item) => item.fabricId === id)) return false; const size = fabrics.length; fabrics = fabrics.filter((item) => item.id !== id); return size !== fabrics.length; }
+  async remove(id: string) { const size = fabrics.length; fabrics = fabrics.filter((item) => item.id !== id); if (size === fabrics.length) return false; configurations.forEach((item) => { if (item.fabricId === id) item.fabricId = null; }); return true; }
 }
 
 export class DemoConfigurationRepository implements ConfigurationRepository {

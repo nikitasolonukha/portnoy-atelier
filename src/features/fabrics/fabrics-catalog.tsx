@@ -1,33 +1,159 @@
 "use client";
-/* eslint-disable @next/next/no-img-element -- private authenticated assets are intentionally rendered directly. */
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Archive, ArrowUpDown, Grid2X2, List, Plus, Search, Upload } from "lucide-react";
+import { Archive, Grid2X2, List, Plus, Search, Upload } from "lucide-react";
 import { filterFabrics, sortFabrics, type CatalogSort } from "@/lib/catalog";
 import { formatMoney } from "@/lib/utils";
-import { ButtonLink, PageHeading } from "@/components/ui/primitives";
+import { ButtonLink } from "@/components/ui/primitives";
+import { FabricMedia } from "@/components/ui/fabric-media";
 import { useWorkspace } from "@/features/workspace/workspace-store";
 import { useCurrentUser } from "@/features/auth/current-user-context";
 import { can } from "@/lib/permissions";
 
+type FilterKey = "color" | "pattern" | "status" | "sort";
+
 export function FabricsCatalog() {
   const user = useCurrentUser();
   const fabrics = useWorkspace((state) => state.fabrics);
-  const [query, setQuery] = useState(""); const [color, setColor] = useState(""); const [pattern, setPattern] = useState(""); const [status, setStatus] = useState<"active"|"archived"|"all">("active"); const [sort, setSort] = useState<CatalogSort>("name-asc"); const [view, setView] = useState<"grid"|"list">("grid");
-  const colors = [...new Set(fabrics.map((f) => f.mainColor))].filter(Boolean); const patterns = [...new Set(fabrics.map((f) => f.pattern))].filter(Boolean);
-  const visible = useMemo(() => sortFabrics(filterFabrics(fabrics, { query, color, pattern, status }), sort), [fabrics, query, color, pattern, status, sort]);
-  const preview = (fabric: typeof fabrics[number]) => (fabric.assets ?? []).find((asset) => asset.type === "photo");
-  return <div className="space-y-8">
-    <PageHeading eyebrow="Материалы" title="Каталог тканей" description={`${visible.length} из ${fabrics.length} образцов в текущей базе.`} actions={<>{can(user.role, "fabric:import") && <ButtonLink href="/fabrics/import" variant="secondary"><Upload size={17} /> Импорт</ButtonLink>}{can(user.role, "fabric:create") && <ButtonLink href="/fabrics/new"><Plus size={17} /> Добавить ткань</ButtonLink>}</>} />
-    <section className="surface p-3" aria-label="Поиск и фильтры"><div className="grid gap-2 xl:grid-cols-[minmax(240px,1fr)_160px_160px_150px_auto]">
-      <label className="relative"><span className="sr-only">Поиск тканей</span><Search className="absolute left-3 top-3.5 text-[#77736b]" size={18} aria-hidden="true" /><input className="input pl-10" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Артикул, название, фабрика" /></label>
-      <label><span className="sr-only">Цвет</span><select className="select" value={color} onChange={(e) => setColor(e.target.value)}><option value="">Все цвета</option>{colors.map((item) => <option key={item}>{item}</option>)}</select></label>
-      <label><span className="sr-only">Рисунок</span><select className="select" value={pattern} onChange={(e) => setPattern(e.target.value)}><option value="">Все рисунки</option>{patterns.map((item) => <option key={item}>{item}</option>)}</select></label>
-      <label><span className="sr-only">Статус</span><select className="select" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}><option value="active">Активные</option><option value="archived">Архив</option><option value="all">Все</option></select></label>
-      <div className="flex"><button className="icon-button border-r-0" data-active={view === "grid"} aria-label="Показать плиткой" onClick={() => setView("grid")}><Grid2X2 size={18} /></button><button className="icon-button" aria-label="Показать списком" onClick={() => setView("list")}><List size={18} /></button></div>
-    </div></section>
-    <div className="flex items-center justify-between border-b border-[#d3ccc0] pb-3"><p className="text-sm"><b>{visible.length}</b> результатов</p><label className="flex items-center gap-2 text-xs font-bold"><ArrowUpDown size={15} /><span className="sr-only">Сортировка</span><select className="bg-transparent" value={sort} onChange={(e) => setSort(e.target.value as CatalogSort)}><option value="name-asc">По названию А–Я</option><option value="name-desc">По названию Я–А</option><option value="article-asc">По артикулу</option></select></label></div>
-    {visible.length === 0 ? <div className="empty-state"><Search className="mx-auto mb-3 text-[#77736b]" /><h2 className="font-display text-2xl">Ничего не найдено</h2><p className="muted mt-2 text-sm">Измените запрос или сбросьте фильтры.</p></div> : view === "grid" ? <div className="grid gap-x-5 gap-y-8 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{visible.map((fabric) => <Link key={fabric.id} href={`/fabrics/${fabric.id}`} className="group text-inherit no-underline"><div className="relative aspect-[1.18] overflow-hidden">{preview(fabric) ? <img src={preview(fabric)?.url} alt="" className="h-full w-full object-cover" /> : <div className={`fabric-swatch ${fabric.swatch} h-full w-full`} />}<span className="absolute left-3 top-3 z-10 bg-[#f8f5ef] px-2 py-1 text-[10px] font-bold tracking-[.08em]">{fabric.article}</span>{!fabric.isActive && <span className="absolute right-3 top-3 z-10 flex items-center gap-1 bg-[#292c29] px-2 py-1 text-[10px] text-white"><Archive size={11} /> Архив</span>}</div><div className="mt-3 flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="font-display truncate text-xl font-normal">{fabric.name}</h2><p className="muted mt-1 truncate text-xs">{fabric.manufacturer} · {fabric.composition}</p></div><b className="text-sm">{formatMoney(fabric.pricePerMeter, fabric.currency)}</b></div></Link>)}</div> : <div className="divide-y divide-[#d3ccc0] border-y border-[#d3ccc0]">{visible.map((fabric) => <Link key={fabric.id} href={`/fabrics/${fabric.id}`} className="grid grid-cols-[58px_82px_minmax(0,1fr)] items-center gap-3 py-3 text-inherit no-underline sm:grid-cols-[58px_100px_minmax(0,1fr)_auto] sm:gap-4">{preview(fabric) ? <img src={preview(fabric)?.url} alt="" className="size-[58px] object-cover" /> : <div className={`fabric-swatch ${fabric.swatch} size-[58px]`} />}<b className="text-xs">{fabric.article}</b><div className="min-w-0"><h2 className="truncate text-sm font-bold">{fabric.name}</h2><p className="muted mt-1 truncate text-xs">{fabric.manufacturer} · {fabric.mainColor} · {fabric.pattern}</p></div><b className="hidden text-sm sm:block">{formatMoney(fabric.pricePerMeter, fabric.currency)}</b></Link>)}</div>}
-  </div>;
+  const [query, setQuery] = useState("");
+  const [color, setColor] = useState("");
+  const [pattern, setPattern] = useState("");
+  const [status, setStatus] = useState<"active" | "archived" | "all">("active");
+  const [sort, setSort] = useState<CatalogSort>("name-asc");
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  const colors = [...new Set(fabrics.map((f) => f.mainColor))].filter(Boolean);
+  const patterns = [...new Set(fabrics.map((f) => f.pattern))].filter(Boolean);
+  const visible = useMemo(
+    () => sortFabrics(filterFabrics(fabrics, { query, color, pattern, status }), sort),
+    [fabrics, query, color, pattern, status, sort],
+  );
+
+  function toggleFilter(key: FilterKey) {
+    setOpenFilter((current) => (current === key ? null : key));
+  }
+
+  return (
+    <div className="space-y-8">
+      <header className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <div>
+          <p className="micro-label">Material index</p>
+          <h1 className="page-title mt-3">Каталог тканей</h1>
+          <p className="mt-3 text-sm text-[--ink-secondary]">{visible.length} из {fabrics.length} образцов</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {can(user.role, "fabric:import") && (
+            <ButtonLink href="/fabrics/import" variant="secondary"><Upload size={16} /> Импорт</ButtonLink>
+          )}
+          {can(user.role, "fabric:create") && (
+            <ButtonLink href="/fabrics/new"><Plus size={16} /> Добавить</ButtonLink>
+          )}
+        </div>
+      </header>
+
+      <div className="filter-bar" ref={filterRef}>
+        <label className="filter-bar__search">
+          <span className="sr-only">Поиск тканей</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[--text-tertiary]" size={17} aria-hidden="true" />
+          <input
+            className="input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Артикул, название, фабрика"
+          />
+        </label>
+        <div className="relative flex flex-wrap items-center gap-4">
+          {([
+            ["color", "Цвет", color || "Все"],
+            ["pattern", "Рисунок", pattern || "Все"],
+            ["status", "Статус", status === "active" ? "Активные" : status === "archived" ? "Архив" : "Все"],
+            ["sort", "Сортировка", sort === "name-asc" ? "А–Я" : sort === "name-desc" ? "Я–А" : "Артикул"],
+          ] as const).map(([key, label, value]) => (
+            <div key={key} className="relative">
+              <button type="button" className="filter-chip" data-active={openFilter === key || (key !== "sort" && Boolean(value && value !== "Все" && value !== "Активные"))} onClick={() => toggleFilter(key)}>
+                {label}: {value}
+              </button>
+              {openFilter === key && (
+                <div className="filter-panel">
+                  {key === "color" && colors.map((item) => (
+                    <button key={item} type="button" className="block w-full py-2 text-left text-sm" onClick={() => { setColor(item); setOpenFilter(null); }}>{item}</button>
+                  ))}
+                  {key === "color" && <button type="button" className="block w-full py-2 text-left text-sm text-[--ink-tertiary]" onClick={() => { setColor(""); setOpenFilter(null); }}>Все</button>}
+                  {key === "pattern" && patterns.map((item) => (
+                    <button key={item} type="button" className="block w-full py-2 text-left text-sm" onClick={() => { setPattern(item); setOpenFilter(null); }}>{item}</button>
+                  ))}
+                  {key === "pattern" && <button type="button" className="block w-full py-2 text-left text-sm text-[--ink-tertiary]" onClick={() => { setPattern(""); setOpenFilter(null); }}>Все</button>}
+                  {key === "status" && (["active", "archived", "all"] as const).map((item) => (
+                    <button key={item} type="button" className="block w-full py-2 text-left text-sm" onClick={() => { setStatus(item); setOpenFilter(null); }}>
+                      {item === "active" ? "Активные" : item === "archived" ? "Архив" : "Все"}
+                    </button>
+                  ))}
+                  {key === "sort" && (["name-asc", "name-desc", "article-asc"] as const).map((item) => (
+                    <button key={item} type="button" className="block w-full py-2 text-left text-sm" onClick={() => { setSort(item); setOpenFilter(null); }}>
+                      {item === "name-asc" ? "По названию А–Я" : item === "name-desc" ? "По названию Я–А" : "По артикулу"}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          <div className="flex overflow-hidden rounded-[10px] border border-[rgba(245,241,233,.12)]">
+            <button className="icon-button rounded-none border-0 border-r border-[rgba(245,241,233,.12)]" data-active={view === "grid"} aria-label="Плиткой" onClick={() => setView("grid")}><Grid2X2 size={16} /></button>
+            <button className="icon-button rounded-none border-0" data-active={view === "list"} aria-label="Списком" onClick={() => setView("list")}><List size={16} /></button>
+          </div>
+        </div>
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="empty-state">
+          <Search className="mx-auto mb-3 text-[--ink-tertiary]" />
+          <h2 className="section-title">Ничего не найдено</h2>
+          <p className="muted mt-2 text-sm">Измените запрос или сбросьте фильтры.</p>
+        </div>
+      ) : view === "grid" ? (
+        <div className="catalog-editorial">
+          {visible.map((fabric) => (
+            <Link
+              key={fabric.id}
+              href={`/fabrics/${fabric.id}`}
+              className="fabric-tile group"
+            >
+              <FabricMedia fabric={fabric} aspect="aspect-square" />
+              {!fabric.isActive && (
+                <p className="mt-1.5 flex items-center gap-1 text-[10px] uppercase tracking-[.12em] text-[--ink-tertiary]">
+                  <Archive size={11} /> Архив
+                </p>
+              )}
+              <div className="fabric-tile__meta">
+                <p className="fabric-tile__article">{fabric.article}</p>
+                <p className="fabric-tile__name">{fabric.name}</p>
+                <p className="fabric-tile__sub">
+                  {fabric.manufacturer}
+                  {fabric.mainColor ? ` · ${fabric.mainColor}` : ""}
+                </p>
+                <p className="fabric-tile__price">{formatMoney(fabric.pricePerMeter, fabric.currency)} / м</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="divide-y divide-[--border]">
+          {visible.map((fabric) => (
+            <Link key={fabric.id} href={`/fabrics/${fabric.id}`} className="grid grid-cols-[72px_1fr_auto] items-center gap-4 py-4 text-inherit no-underline sm:grid-cols-[88px_1fr_auto]">
+              <FabricMedia fabric={fabric} className="!aspect-square" />
+              <div className="min-w-0">
+                <p className="fabric-tile__article">{fabric.article}</p>
+                <p className="font-display mt-1 text-lg">{fabric.name}</p>
+                <p className="fabric-tile__sub">{fabric.manufacturer} · {fabric.mainColor} · {fabric.pattern}</p>
+              </div>
+              <p className="text-sm font-medium">{formatMoney(fabric.pricePerMeter, fabric.currency)}</p>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

@@ -9,5 +9,14 @@ test-results/
 .DS_Store
 
 artifacts-*.png
+artifacts/
+.tmp-glb-check/
+.vercel
 supabase/.temp/
 supabase/.branches/
+
+# Sketchfab donor drops (large); keep README only
+assets/3d/donors/**
+!assets/3d/donors/README.md
+assets/3d/work/
+.vercel

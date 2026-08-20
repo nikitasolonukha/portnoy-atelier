@@ -10,8 +10,8 @@ test("employee UI, direct restricted routes and API are read-only for fabrics", 
   try {
     await loginAs(page, "employee");
     await page.goto("/fabrics");
-    await expect(page.getByRole("link", { name: "Добавить ткань" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Импорт" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Добавить", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Импорт", exact: true })).toHaveCount(0);
     await page.goto("/fabrics/import");
     await expect(page.getByRole("heading", { name: "Недостаточно прав" })).toBeVisible();
     await page.goto("/fabrics/new");
@@ -32,8 +32,8 @@ test("employee UI, direct restricted routes and API are read-only for fabrics", 
 test("tailor can create/update but cannot delete fabrics", async ({ page }) => {
   await loginAs(page, "tailor");
   await page.goto("/fabrics");
-  await expect(page.getByRole("link", { name: "Добавить ткань" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Импорт" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Добавить", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Импорт", exact: true })).toBeVisible();
   const created = await page.evaluate(async () => {
     const create = await fetch("/api/v1/fabrics", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ article: "E2E-TAILOR", name: "Tailor fabric" }) });
     const payload = await create.json();

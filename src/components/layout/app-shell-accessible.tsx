@@ -11,8 +11,8 @@ import type { CurrentUser } from "@/types/auth";
 const items = [
   { href: "/dashboard", label: "Обзор", icon: LayoutDashboard },
   { href: "/fabrics", label: "Ткани", icon: SwatchBook },
-  { href: "/configurator", label: "Конфигуратор", icon: Settings2 },
-  { href: "/configurations", label: "Конфигурации", icon: Archive },
+  { href: "/configurator", label: "Сборка", icon: Settings2 },
+  { href: "/configurations", label: "Варианты", icon: Archive },
 ];
 
 function initials(name: string) {
@@ -24,6 +24,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
   const [open, setOpen] = useState(false);
   const openButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+  const fullBleed = pathname.startsWith("/configurator") || pathname.startsWith("/fabrics");
 
   useEffect(() => {
     if (!open) return;
@@ -35,16 +36,78 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [open]);
 
-  return <CurrentUserProvider user={user}><div className="app-grid">
-    {open && <button className="fixed inset-0 z-20 bg-black/35 lg:hidden" aria-label="Закрыть меню" onClick={() => { setOpen(false); openButton.current?.focus(); }} />}
-    <aside id="primary-navigation" className="sidebar" data-open={open} aria-label="Основная навигация">
-      <div className="mb-9 flex items-center justify-between gap-3"><Link href="/dashboard" className="flex items-center gap-3 text-white no-underline" onClick={() => setOpen(false)}><span className="brand-mark">П</span><span><b className="font-display text-xl font-normal">Портной</b><small className="block text-[10px] uppercase tracking-[.16em] text-[#aeb1aa]">atelier workspace</small></span></Link><button ref={closeButton} className="icon-button border-[#555b56] text-white lg:hidden" aria-label="Закрыть меню" onClick={() => { setOpen(false); openButton.current?.focus(); }}><X size={20} aria-hidden="true" /></button></div>
-      <nav className="space-y-1">{items.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className="nav-link" aria-current={pathname.startsWith(href) ? "page" : undefined} data-active={pathname.startsWith(href)} onClick={() => setOpen(false)}><Icon size={18} aria-hidden="true" /><span>{label}</span></Link>)}</nav>
-      <div className="mt-auto border-t border-[#3b413c] pt-5"><div className="mb-4 flex items-center gap-2 px-3 text-xs text-[#b8b9b4]"><span className="status-dot" /> {process.env.NEXT_PUBLIC_APP_MODE === "supabase" ? "Supabase подключён" : "Демо-база активна"}</div><LogoutButton /></div>
-    </aside>
-    <main className="page-shell">
-      <header className="topbar"><div className="flex items-center gap-3"><button ref={openButton} className="icon-button lg:hidden" aria-label="Открыть меню" aria-controls="primary-navigation" aria-expanded={open} onClick={() => setOpen(true)}><Menu size={20} aria-hidden="true" /></button><p className="hidden text-sm font-bold sm:block">Рабочее пространство ателье</p></div><div className="flex min-h-11 items-center gap-2 px-2" aria-label={`Текущий пользователь: ${user.fullName}`}><span className="grid size-8 place-items-center bg-[#d9d0c2] font-serif" aria-hidden="true">{initials(user.fullName)}</span><span className="hidden sm:inline">{user.fullName}</span></div></header>
-      <div className="page-content">{children}</div>
-    </main>
-  </div></CurrentUserProvider>;
+  return (
+    <CurrentUserProvider user={user}>
+      <div className="app-grid">
+        {open && (
+          <button
+            className="fixed inset-0 z-20 bg-black/35 md:hidden"
+            aria-label="Закрыть меню"
+            onClick={() => { setOpen(false); openButton.current?.focus(); }}
+          />
+        )}
+
+        <aside id="primary-navigation" className="sidebar" data-open={open} aria-label="Основная навигация">
+          <div className="flex w-full items-center justify-between px-4 md:justify-center md:px-0">
+            <Link href="/dashboard" className="brand-mark" onClick={() => setOpen(false)} aria-label="Портной">
+              П
+            </Link>
+            <button
+              ref={closeButton}
+              className="grid size-9 place-items-center text-white/60 hover:text-white md:hidden"
+              aria-label="Закрыть меню"
+              onClick={() => { setOpen(false); openButton.current?.focus(); }}
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
+
+          <nav className="nav-rail" aria-label="Разделы">
+            {items.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="nav-rail-link"
+                aria-current={pathname.startsWith(href) ? "page" : undefined}
+                data-active={pathname.startsWith(href)}
+                onClick={() => setOpen(false)}
+              >
+                <Icon size={18} strokeWidth={1.5} aria-hidden="true" className="nav-rail-icon" />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </nav>
+
+          <div className="sidebar-foot">
+            <span className="micro-label mb-2 text-white/35" aria-label={`Текущий пользователь: ${user.fullName}`}>
+              {initials(user.fullName)}
+            </span>
+            <LogoutButton />
+          </div>
+        </aside>
+
+        <main className="page-shell">
+          <header className="mobile-bar">
+            <button
+              ref={openButton}
+              className="mobile-bar__menu"
+              aria-label="Открыть меню"
+              aria-controls="primary-navigation"
+              aria-expanded={open}
+              onClick={() => setOpen(true)}
+            >
+              <Menu size={18} aria-hidden="true" />
+            </button>
+            <p className="text-[11px] font-semibold uppercase tracking-[.14em] text-[--text-secondary]">Portnoy</p>
+            <span className="mobile-bar__user" aria-label={`Текущий пользователь: ${user.fullName}`}>
+              {initials(user.fullName)}
+            </span>
+          </header>
+          <div className={fullBleed ? "page-content page-content--flush fade-in" : "page-content fade-in"}>
+            {children}
+          </div>
+        </main>
+      </div>
+    </CurrentUserProvider>
+  );
 }

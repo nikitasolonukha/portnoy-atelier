@@ -1,0 +1,14 @@
+.tmp-glb-check
+.tmp-portnoy-import
+artifacts
+.claude
+.cursor
+coverage
+playwright-report
+test-results
+supabase/.temp
+supabase/.branches
+assets/3d/donors
+assets/3d/work
+*.md
+!AGENTS.md

@@ -19,7 +19,9 @@ export default defineConfig({
         "src/lib/import.ts",
         "src/lib/image-upload.ts",
         "src/interface/http/respond.ts",
-        "src/infrastructure/supabase/fabric-mapper.ts"
+        "src/infrastructure/supabase/fabric-mapper.ts",
+        "src/features/three/state/derive-suit-visual-state.ts",
+        "src/features/three/state/resolve-suit-nodes.ts",
       ],
       exclude: ["**/*.test.ts", "**/ports/**"],
     },

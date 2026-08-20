@@ -1,8 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { ButtonLink, PageHeading } from "@/components/ui/primitives";
+import { ButtonLink } from "@/components/ui/primitives";
+import { FabricMedia } from "@/components/ui/fabric-media";
 import { useWorkspace } from "@/features/workspace/workspace-store";
 
 export function CompareConfigurations() {
@@ -12,15 +12,73 @@ export function CompareConfigurations() {
   const fabrics = useWorkspace((state) => state.fabrics);
   const left = configurations.find((item) => item.id === params.get("left"));
   const right = configurations.find((item) => item.id === params.get("right"));
-  if (!left || !right || left.id === right.id) return <div className="empty-state" role="alert"><h1 className="font-display text-3xl">Нужно выбрать две разные конфигурации</h1><ButtonLink href="/configurations" className="mt-5">Вернуться к списку</ButtonLink></div>;
+
+  if (!left || !right || left.id === right.id) {
+    return (
+      <div className="empty-state" role="alert">
+        <h1 className="section-title">Нужно выбрать две разные конфигурации</h1>
+        <ButtonLink href="/configurations" className="mt-5">Вернуться к списку</ButtonLink>
+      </div>
+    );
+  }
+
   const leftFabric = fabrics.find((fabric) => fabric.id === left.fabricId);
   const rightFabric = fabrics.find((fabric) => fabric.id === right.fabricId);
   const rows = [
     { key: "fabric", label: "Ткань", left: leftFabric ? `${leftFabric.name} (${leftFabric.article})` : "—", right: rightFabric ? `${rightFabric.name} (${rightFabric.article})` : "—" },
-    ...groups.map((group) => ({ key: group.key, label: group.name, left: group.options.find((option) => option.key === left.settings[group.key])?.name ?? "—", right: group.options.find((option) => option.key === right.settings[group.key])?.name ?? "—" })),
+    ...groups.map((group) => ({
+      key: group.key,
+      label: group.name,
+      left: group.options.find((option) => option.key === left.settings[group.key])?.name ?? "—",
+      right: group.options.find((option) => option.key === right.settings[group.key])?.name ?? "—",
+    })),
   ];
-  return <div className="space-y-8"><PageHeading eyebrow="Сопоставление" title="Сравнение вариантов" actions={<ButtonLink href="/configurations" variant="secondary"><ArrowLeft size={17} /> К списку</ButtonLink>} />
-    <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch gap-2 sm:grid-cols-[minmax(0,1fr)_52px_minmax(0,1fr)] sm:gap-3"><div className="surface min-w-0 p-3 sm:p-6"><div className={`fabric-swatch ${leftFabric?.swatch ?? "charcoal"} aspect-[2/1]`} /><h2 className="font-display mt-4 break-words text-xl sm:text-2xl">{left.name}</h2><p className="muted mt-1 text-xs">{leftFabric?.name ?? "Ткань не выбрана"}</p></div><div className="grid place-items-center"><ArrowRight className="text-[#7a2635]" /></div><div className="surface min-w-0 p-3 sm:p-6"><div className={`fabric-swatch ${rightFabric?.swatch ?? "charcoal"} aspect-[2/1]`} /><h2 className="font-display mt-4 break-words text-xl sm:text-2xl">{right.name}</h2><p className="muted mt-1 text-xs">{rightFabric?.name ?? "Ткань не выбрана"}</p></div></div>
-    <section><div className="rule-title"><h2>Параметры</h2><span className="muted text-xs">Отличия выделены</span></div><div className="divide-y divide-[#d3ccc0]">{rows.map((row) => { const differs = row.left !== row.right; return <div key={row.key} data-compare-row={row.key} className={`grid grid-cols-[minmax(0,1fr)_82px_minmax(0,1fr)] gap-2 py-4 text-xs sm:grid-cols-[minmax(0,1fr)_130px_minmax(0,1fr)] sm:gap-3 sm:text-sm ${differs ? "bg-[#f3e7e7]" : ""}`}><b className="break-words px-2 text-right sm:px-3">{row.left}</b><span className="muted text-center text-[10px] uppercase tracking-[.08em] sm:text-xs sm:tracking-[.1em]">{row.label}</span><b className="break-words px-2 sm:px-3">{row.right}</b></div>; })}</div></section>
-  </div>;
+
+  return (
+    <div className="space-y-10">
+      <header>
+        <p className="micro-label">Specification compare</p>
+        <h1 className="page-title mt-3">Сравнение</h1>
+        <div className="mt-4">
+          <ButtonLink href="/configurations" variant="secondary">К списку</ButtonLink>
+        </div>
+      </header>
+
+      <div className="compare-variants">
+        <div className="compare-variant compare-variant--a">
+          <p className="micro-label mb-3">Variant A</p>
+          <FabricMedia fabric={leftFabric ?? { swatch: "charcoal", assets: [] }} aspect="aspect-[16/10]" className="!rounded-[14px]" />
+          <h2 className="font-display mt-4 text-xl">{left.name}</h2>
+        </div>
+        <div className="compare-variant compare-variant--b">
+          <p className="micro-label mb-3">Variant B</p>
+          <FabricMedia fabric={rightFabric ?? { swatch: "charcoal", assets: [] }} aspect="aspect-[16/10]" className="!rounded-[14px]" />
+          <h2 className="font-display mt-4 text-xl">{right.name}</h2>
+        </div>
+      </div>
+
+      <section aria-label="Параметры" className="compare-sheet">
+        <div className="px-4 pt-4 pb-3">
+          <p className="micro-label">Parameters</p>
+        </div>
+        <div>
+          {rows.map((row) => {
+            const differs = row.left !== row.right;
+            return (
+              <div
+                key={row.key}
+                data-compare-row={row.key}
+                data-differs={differs}
+                className={`compare-sheet__row grid grid-cols-[minmax(0,1fr)_100px_minmax(0,1fr)] gap-3 px-4 py-4 text-sm md:grid-cols-[minmax(0,1fr)_140px_minmax(0,1fr)] ${row.key !== rows.at(-1)?.key ? "border-b border-[--border]" : ""}`}
+              >
+                <span className={`compare-sheet__value text-right font-medium ${differs ? "" : "text-[--text-secondary]"}`}>{row.left}</span>
+                <span className="micro-label text-center">{row.label}</span>
+                <span className={`compare-sheet__value font-medium ${differs ? "" : "text-[--text-secondary]"}`}>{row.right}</span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
 }

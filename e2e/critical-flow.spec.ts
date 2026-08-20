@@ -11,7 +11,7 @@ test("login opens the atelier workspace", async ({ page }) => {
 test("fabric catalog search and configurator work", async ({ page }) => {
   await page.goto("/fabrics");
   await page.getByPlaceholder("Артикул, название, фабрика").fill("VB-2401");
-  await expect(page.getByRole("heading", { name: "Midnight Hopsack" })).toBeVisible();
+  await expect(page.locator(".fabric-tile__name", { hasText: "Midnight Hopsack" })).toBeVisible();
   await page.goto("/configurator");
   await page.waitForTimeout(500);
   await expect(page.getByRole("heading", { name: "Конфигуратор" })).toBeVisible();
