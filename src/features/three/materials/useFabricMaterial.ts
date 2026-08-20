@@ -32,12 +32,10 @@ export function useFabricMaterial(fabric?: Fabric | null): SuitMaterialsMap {
   const profile = useMemo(() => getFabricTextureProfile(fabric), [fabric]);
   const surfaceUrl = fabricSurfaceMap(fabric ?? { assets: [] })?.url ?? null;
   const [surfaceTexture, setSurfaceTexture] = useState<THREE.Texture | null>(null);
+  const activeSurfaceTexture = surfaceUrl ? surfaceTexture : null;
 
   useEffect(() => {
-    if (!surfaceUrl) {
-      setSurfaceTexture(null);
-      return;
-    }
+    if (!surfaceUrl) return;
 
     let cancelled = false;
     const loader = new THREE.TextureLoader();
@@ -64,17 +62,16 @@ export function useFabricMaterial(fabric?: Fabric | null): SuitMaterialsMap {
     return () => {
       cancelled = true;
       texture.dispose();
-      setSurfaceTexture(null);
     };
   }, [surfaceUrl]);
 
   const materials = useMemo(() => {
     const swatch = profile.swatch;
-    const repeat = surfaceMapRepeat(Boolean(surfaceTexture), swatch, profile.patternType);
-    const diffuseSource = surfaceTexture ?? createSwatchFabricTexture(swatch, "diffuse", profile.patternType);
+    const repeat = surfaceMapRepeat(Boolean(activeSurfaceTexture), swatch, profile.patternType);
+    const diffuseSource = activeSurfaceTexture ?? createSwatchFabricTexture(swatch, "diffuse", profile.patternType);
     const bumpSource = createSwatchFabricTexture(swatch, "bump", profile.patternType);
-    // Clone cached swatches only — photo maps are owned by the loader effect.
-    const diffuse = surfaceTexture ? diffuseSource : diffuseSource.clone();
+    // Always clone before mutating wrap/repeat so React state-owned textures stay untouched.
+    const diffuse = diffuseSource.clone();
     const bump = bumpSource.clone();
     diffuse.wrapS = THREE.RepeatWrapping;
     diffuse.wrapT = THREE.RepeatWrapping;
@@ -90,7 +87,7 @@ export function useFabricMaterial(fabric?: Fabric | null): SuitMaterialsMap {
       color: new THREE.Color(0xffffff),
       map: diffuse,
       bumpMap: bump,
-      bumpScale: surfaceTexture ? Math.min(profile.bumpScale, 0.012) : profile.bumpScale,
+      bumpScale: activeSurfaceTexture ? Math.min(profile.bumpScale, 0.012) : profile.bumpScale,
       roughness: profile.roughness,
       metalness: profile.metalness,
       sheen: profile.sheen,
@@ -132,11 +129,11 @@ export function useFabricMaterial(fabric?: Fabric | null): SuitMaterialsMap {
       metalMaterial,
       feltMaterial,
     };
-  }, [profile, surfaceTexture]);
+  }, [profile, activeSurfaceTexture]);
 
   useEffect(() => {
     return () => {
-      // Do not dispose map/bumpMap: swatch textures are cached; photo maps are owned by the loader effect.
+      // Do not dispose map/bumpMap: clones may share image data with the swatch cache / loader.
       materials.fabricMaterial.dispose();
       materials.buttonMaterial.dispose();
       materials.liningMaterial.dispose();

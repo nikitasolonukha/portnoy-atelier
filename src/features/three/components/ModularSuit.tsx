@@ -36,7 +36,6 @@ export function ModularSuit({ visualState, materials }: ModularSuitProps) {
       if (isButtonNode(node.name) || /button/i.test(node.parent?.name ?? "")) {
         node.material = buttonMaterial;
       } else {
-        fabricMaterial.side = THREE.DoubleSide;
         node.material = fabricMaterial;
       }
       node.castShadow = true;

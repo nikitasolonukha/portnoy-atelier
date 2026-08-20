@@ -70,7 +70,7 @@ export function getFabricTextureProfile(fabric?: Fabric | null): FabricMaterialP
   let sheen = 0.12;
   let sheenRoughness = 0.85;
   let clearcoat = 0.02;
-  let clearcoatRoughness = 0.55;
+  const clearcoatRoughness = 0.55;
   let bumpScale = 0.018;
 
   if (composition.includes("кашемир") || composition.includes("cashmere") || composition.includes("super 150")) {
