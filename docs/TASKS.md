@@ -75,10 +75,23 @@
 - [x] Restore shell `aria-label="Текущий пользователь: …"`; supabase login helper filters visible; role-matrix `Добавить`; stage-one status chip.
 - [x] Map RLS-blocked fabric delete (in use) to `fabric_in_use` 409 instead of false 404.
 
+## Stage 1 spec compliance gaps
+
+Acceptance criteria:
+- [x] Catalog manufacturer multi-select (OR) from loaded fabrics + reset.
+- [x] Catalog composition multi-select from exact `composition` values + reset.
+- [x] Sort options include newest/oldest via `createdAt`, plus name/article.
+- [x] Grid/list preference persists in `localStorage` key `portnoy:fabrics:view` (SSR-safe).
+- [x] Photo reorder + main photo via existing `sort_order` (`PATCH /api/v1/fabrics/{id}/assets`); no new column/migration.
+- [x] Texture lightbox on fabric detail (Escape + close).
+- [x] Fabric form: «Сохранить и открыть в конфигураторе» only after successful save/assets.
+- [x] Fabric form unsaved guard (dialog + beforeunload); no prompt when clean.
+- [x] `docs/PROJECT_SPEC.md` documents technical 3D Stage 1 without claiming modular mesh swaps.
+
 ## External activation checklist
 
 - [x] `fix/final-stage-one-hardening` pushed; draft PR [#7](https://github.com/nikitasolonukha/portnoy-atelier/pull/7) targets `main`.
-- [ ] Obtain green GitHub Actions evidence for quality, demo E2E and Supabase jobs on PR [#8](https://github.com/nikitasolonukha/portnoy-atelier/pull/8).
+- [ ] Obtain green GitHub Actions evidence for quality, demo E2E and Supabase jobs on the compliance PR.
 - [ ] Create/link staging Supabase and populate secrets outside git.
 - [ ] Apply migrations and repeat admin/tailor/employee browser + direct RLS matrix on staging.
 - [ ] Create staging deployment and attach staging URL.
