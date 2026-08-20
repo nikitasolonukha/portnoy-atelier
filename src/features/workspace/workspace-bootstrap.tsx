@@ -19,7 +19,7 @@ export function WorkspaceBootstrap({ children }: { children: React.ReactNode }) 
     return <div className="surface grid min-h-[320px] place-items-center p-8" role="status"><p className="muted text-sm">Загружаем рабочее пространство…</p></div>;
   }
   if (usesSupabase && status === "error") {
-    return <div className="empty-state" role="alert"><h1 className="font-display text-3xl">Не удалось загрузить данные</h1><p className="muted mt-2 text-sm">{error}</p><Button className="mt-5" onClick={() => void hydrate()}>Повторить</Button></div>;
+    return <div className="empty-state" role="alert"><h1 className="section-title">Не удалось загрузить данные</h1><p className="muted mt-2 text-sm">{error}</p><Button className="mt-5" onClick={() => void hydrate()}>Повторить</Button></div>;
   }
   return children;
 }

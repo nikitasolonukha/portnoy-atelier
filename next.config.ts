@@ -15,18 +15,28 @@ function supabaseConnectSources() {
 }
 
 const connectSources = ["'self'", "https://*.supabase.co", "wss://*.supabase.co", ...supabaseConnectSources()].join(" ");
+const isDev = process.env.NODE_ENV !== "production";
+const scriptSources = isDev
+  ? "'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'"
+  : "'self' 'unsafe-inline' 'wasm-unsafe-eval'";
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-  { key: "Content-Security-Policy", value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src ${connectSources}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'` },
+  { key: "Content-Security-Policy", value: `default-src 'self'; script-src ${scriptSources}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src ${connectSources}; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'` },
 ];
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  outputFileTracingIncludes: { "/*": ["./node_modules/@swc/helpers/**/*"] },
+  // Docker/local container needs standalone; Vercel NFT tracing breaks with it.
+  ...(process.env.VERCEL
+    ? {}
+    : {
+        output: "standalone" as const,
+        outputFileTracingIncludes: { "/*": ["./node_modules/@swc/helpers/**/*"] },
+      }),
+  transpilePackages: ["three", "@react-three/fiber", "@react-three/drei"],
   poweredByHeader: false,
   reactStrictMode: true,
   allowedDevOrigins: ["127.0.0.1", "localhost"],

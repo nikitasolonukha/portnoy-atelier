@@ -2,21 +2,21 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, FileSpreadsheet, UploadCloud, XCircle } from "lucide-react";
+import { CheckCircle2, FileSpreadsheet, UploadCloud, XCircle } from "lucide-react";
 import * as XLSX from "xlsx";
-import { Button, ButtonLink, PageHeading } from "@/components/ui/primitives";
+import { Button, ButtonLink } from "@/components/ui/primitives";
 import { useWorkspace } from "@/features/workspace/workspace-store";
 import type { FabricImportResult } from "@/application/import/execute-import";
 import { applyColumnMapping, importFields, suggestColumnMapping, type ColumnMapping, type ImportField } from "@/lib/import-workflow";
+import { buildImportedFabric, photoAssetsFromUrl, swatchForColor } from "@/lib/fabric-from-import";
 import { requestData } from "@/lib/http-client";
 import { fabricInputSchema, fabricPatchSchema } from "@/schemas/fabric";
-import type { Fabric } from "@/types/domain";
 
 const usesSupabase = process.env.NEXT_PUBLIC_APP_MODE === "supabase";
 const fieldLabels: Record<ImportField, string> = {
   article: "Артикул", name: "Название", manufacturer: "Производитель", collection: "Коллекция",
   composition: "Состав", mainColor: "Основной цвет", pattern: "Рисунок", weightGsm: "Плотность, г/м²",
-  widthCm: "Ширина, см", pricePerMeter: "Цена за метр", currency: "Валюта", description: "Описание",
+  widthCm: "Ширина, см", pricePerMeter: "Цена за метр", currency: "Валюта", description: "Описание", imageUrl: "Фото (URL)",
 };
 
 type Phase = "mapping" | "preview" | "running" | "result";
@@ -63,7 +63,11 @@ export function ImportWorkspace() {
     if (!file) return;
     setError(null); setResult(null); setFilename(file.name);
     try {
-      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const buffer = await file.arrayBuffer();
+      const isCsv = /\.csv$/i.test(file.name);
+      const workbook = isCsv
+        ? XLSX.read(new TextDecoder("utf-8").decode(buffer), { type: "string" })
+        : XLSX.read(buffer, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0] ?? ""];
       if (!sheet) throw new Error("В файле нет листов с данными");
       const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: "", raw: false });
@@ -98,14 +102,21 @@ export function ImportWorkspace() {
       const current = existing.get(article);
       try {
         if (current && strategy === "skip") { skipped += 1; continue; }
-        if (current) { const saved = await updateFabric(current.id, fabricPatchSchema.parse(raw)); existing.set(article, saved); updated += 1; continue; }
-        const now = new Date().toISOString();
-        const fabric: Fabric = {
-          ...parsed.data, weightGsm: parsed.data.weightGsm ?? 0, widthCm: parsed.data.widthCm ?? 0,
-          pricePerMeter: parsed.data.pricePerMeter ?? 0, id: crypto.randomUUID(), isActive: true,
-          swatch: "charcoal", createdAt: now, updatedAt: now,
-        };
-        const saved = await addFabric(fabric); existing.set(article, saved); created += 1;
+        if (current) {
+          const { imageUrl: _ignored, ...patch } = fabricPatchSchema.parse(raw);
+          const assets = photoAssetsFromUrl(parsed.data.imageUrl);
+          const saved = await updateFabric(current.id, {
+            ...patch,
+            ...(assets ? { assets, swatch: swatchForColor(parsed.data.mainColor || current.mainColor) } : {}),
+          });
+          existing.set(article, saved);
+          updated += 1;
+          continue;
+        }
+        const fabric = buildImportedFabric(parsed.data);
+        const saved = await addFabric(fabric);
+        existing.set(article, saved);
+        created += 1;
       } catch (cause) { failed += 1; errors.push({ row: index + 2, article, message: cause instanceof Error ? cause.message : "Не удалось импортировать строку" }); }
     }
     return { created, updated, skipped, failed, partial: failed > 0 && created + updated + skipped > 0, errors };
@@ -127,18 +138,32 @@ export function ImportWorkspace() {
 
   const totals = preview.reduce((acc, item) => ({ ...acc, [item.status]: acc[item.status] + 1 }), { create: 0, update: 0, skip: 0, invalid: 0 });
 
+  const stepIndex = !rawRows.length ? 0 : phase === "mapping" ? 1 : phase === "preview" || phase === "running" ? 2 : 3;
+
   return <div className="space-y-8">
-    <PageHeading eyebrow="Массовое добавление" title="Импорт тканей" description="XLSX, XLS или CSV: сопоставьте колонки, проверьте строки и только затем запустите импорт." actions={<ButtonLink href="/fabrics" variant="secondary"><ArrowLeft size={17} /> Каталог</ButtonLink>} />
-    {!rawRows.length ? <section className="surface grid min-h-[360px] place-items-center p-8 text-center"><div><FileSpreadsheet className="mx-auto mb-5 text-[#7a2635]" size={42} /><h2 className="font-display text-3xl font-normal">Выберите таблицу</h2><p className="muted mx-auto mt-3 max-w-md text-sm leading-6">Обязательные данные: артикул и название. Исходный файл не изменяется.</p><Button className="mt-6" onClick={() => inputRef.current?.click()}><UploadCloud size={18} /> Выбрать файл</Button><input ref={inputRef} className="sr-only" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => void readFile(event.target.files?.[0])} /></div></section> : <>
-      <section className="surface p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="muted text-xs">Файл</p><p className="mt-1 font-bold">{filename} · {rawRows.length} строк</p></div><Button variant="secondary" onClick={reset}>Выбрать другой файл</Button></div></section>
-      {phase === "mapping" && <section className="surface p-5"><div className="rule-title"><h2>1. Сопоставление колонок</h2><span className="muted text-xs">Артикул и название обязательны</span></div><div className="mt-5 grid gap-4 md:grid-cols-2">{headers.map((header) => <label key={header} className="grid gap-2 text-sm"><span className="font-bold">{header}</span><select className="input" value={mapping[header] ?? ""} onChange={(event) => setMapping((current) => ({ ...current, [header]: event.target.value as ImportField | "" }))}><option value="">Не импортировать</option>{importFields.map((field) => <option key={field} value={field}>{fieldLabels[field]}</option>)}</select></label>)}</div>{mappingError && <p role="alert" className="mt-4 text-sm text-[#8b2435]">{mappingError}</p>}<div className="mt-5 flex justify-end"><Button disabled={Boolean(mappingError)} onClick={() => setPhase("preview")}>Проверить строки</Button></div></section>}
-      {(phase === "preview" || phase === "running") && <><section className="surface p-5"><div className="rule-title"><h2>2. Правило для совпавших артикулов</h2></div><div className="mt-4 flex flex-wrap gap-5"><label className="flex items-center gap-2"><input type="radio" name="strategy" checked={strategy === "skip"} onChange={() => setStrategy("skip")} /> Пропустить существующие</label><label className="flex items-center gap-2"><input type="radio" name="strategy" checked={strategy === "update"} onChange={() => setStrategy("update")} /> Обновить существующие</label></div></section><PreviewTable rows={preview} /><div className="flex flex-wrap items-center justify-between gap-3"><Button variant="secondary" onClick={() => setPhase("mapping")} disabled={phase === "running"}>Назад к колонкам</Button><Button onClick={() => void execute()} disabled={phase === "running"}>{phase === "running" ? "Импорт выполняется…" : `Импортировать ${totals.create + totals.update + totals.skip + totals.invalid} строк`}</Button></div></>}
-      {phase === "result" && result && <section className="surface p-6" aria-live="polite"><div className="flex items-start gap-3">{result.failed ? <XCircle className="text-[#8b2435]" /> : <CheckCircle2 className="text-[#34523e]" />}<div><h2 className="font-display text-3xl">{result.partial ? "Импорт завершён частично" : result.failed ? "Импорт завершён с ошибками" : "Импорт завершён"}</h2><p className="muted mt-2 text-sm">Создано: {result.created}. Обновлено: {result.updated}. Пропущено: {result.skipped}. Ошибок: {result.failed}.</p></div></div>{result.errors.length > 0 && <ul className="mt-5 space-y-2 text-sm text-[#8b2435]">{result.errors.slice(0, 50).map((item) => <li key={`${item.row}-${item.article}`}>Строка {item.row}{item.article ? ` (${item.article})` : ""}: {item.message}</li>)}</ul>}<div className="mt-6 flex flex-wrap gap-3"><Button onClick={reset} variant="secondary">Импортировать ещё файл</Button><Link className="button button-primary" href="/fabrics">Открыть каталог</Link></div></section>}
+    <header className="import-hero flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p className="micro-label">Bulk material import</p>
+        <h1 className="page-title mt-3">Импорт тканей</h1>
+        <p className="mt-3 max-w-xl text-sm muted">XLSX, XLS или CSV — сопоставление, проверка, импорт.</p>
+      </div>
+      <ButtonLink href="/fabrics" variant="secondary" className="dashboard-hero__cta">Каталог</ButtonLink>
+    </header>
+    <div className="import-steps" aria-label="Этапы импорта">
+      {["01 File", "02 Mapping", "03 Review", "04 Import"].map((label, index) => (
+        <span key={label} data-active={stepIndex === index} data-done={stepIndex > index}>{label}</span>
+      ))}
+    </div>
+    {!rawRows.length ? <section className="import-dropzone"><div><FileSpreadsheet className="mx-auto mb-5 text-[--accent]" size={42} /><h2 className="section-title">Выберите таблицу</h2><p className="muted mx-auto mt-3 max-w-md text-sm leading-6">Обязательные данные: артикул и название. Исходный файл не изменяется.</p><Button className="mt-6" onClick={() => inputRef.current?.click()}><UploadCloud size={18} /> Выбрать файл</Button><input ref={inputRef} className="sr-only" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => void readFile(event.target.files?.[0])} /></div></section> : <>
+      <section className="surface px-4 py-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="micro-label">Source file</p><p className="mt-1 text-sm font-semibold">{filename} · {rawRows.length} строк</p></div><Button variant="secondary" onClick={reset}>Выбрать другой файл</Button></div></section>
+      {phase === "mapping" && <section className="pt-4"><div className="mb-4"><h2 className="section-title">Сопоставление колонок</h2><span className="muted text-xs">Артикул и название обязательны</span></div><div className="grid gap-4 md:grid-cols-2">{headers.map((header) => <label key={header} className="grid gap-2 text-sm"><span className="font-semibold">{header}</span><select className="input" value={mapping[header] ?? ""} onChange={(event) => setMapping((current) => ({ ...current, [header]: event.target.value as ImportField | "" }))}><option value="">Не импортировать</option>{importFields.map((field) => <option key={field} value={field}>{fieldLabels[field]}</option>)}</select></label>)}</div>{mappingError && <p role="alert" className="mt-4 text-sm text-[--error]">{mappingError}</p>}<div className="mt-5 flex justify-end"><Button disabled={Boolean(mappingError)} onClick={() => setPhase("preview")}>Проверить строки</Button></div></section>}
+      {(phase === "preview" || phase === "running") && <><section className="surface p-5 md:p-6"><p className="micro-label mb-3">Duplicate strategy</p><h2 className="section-title">Правило для совпавших артикулов</h2><div className="mt-5 flex flex-wrap gap-6 text-sm font-medium"><label className="flex items-center gap-2.5"><input type="radio" name="strategy" checked={strategy === "skip"} onChange={() => setStrategy("skip")} /> Пропустить существующие</label><label className="flex items-center gap-2.5"><input type="radio" name="strategy" checked={strategy === "update"} onChange={() => setStrategy("update")} /> Обновить существующие</label></div></section><PreviewTable rows={preview} /><div className="flex flex-wrap items-center justify-between gap-3 pt-2"><Button variant="secondary" onClick={() => setPhase("mapping")} disabled={phase === "running"}>Назад к колонкам</Button><Button onClick={() => void execute()} disabled={phase === "running"}>{phase === "running" ? "Импорт выполняется…" : `Импортировать ${totals.create + totals.update + totals.skip + totals.invalid} строк`}</Button></div></>}
+      {phase === "result" && result && <section className="import-result-panel" aria-live="polite"><div className="flex items-start gap-4">{result.failed ? <XCircle className="text-[--error]" size={28} /> : <CheckCircle2 className="text-[--success]" size={28} />}<div><p className="micro-label">{result.partial ? "Partial import" : result.failed ? "Import errors" : "Import complete"}</p><h2 className="font-display mt-2 text-2xl">{result.partial ? "Импорт завершён частично" : result.failed ? "Импорт завершён с ошибками" : "Импорт завершён"}</h2><p className="muted mt-3 text-sm">Создано: {result.created}. Обновлено: {result.updated}. Пропущено: {result.skipped}. Ошибок: {result.failed}.</p></div></div>{result.errors.length > 0 && <ul className="mt-6 space-y-2 border-t border-[--border] pt-5 text-sm text-[--error]">{result.errors.slice(0, 50).map((item) => <li key={`${item.row}-${item.article}`}>Строка {item.row}{item.article ? ` (${item.article})` : ""}: {item.message}</li>)}</ul>}<div className="mt-8 flex flex-wrap gap-3"><Button onClick={reset} variant="secondary">Импортировать ещё файл</Button><Link className="button button-primary" href="/fabrics">Открыть каталог</Link></div></section>}
     </>}
     {error && <p role="alert" className="field-error">{error}</p>}
   </div>;
 }
 
 function PreviewTable({ rows }: { rows: PreviewRow[] }) {
-  return <section><div className="rule-title"><h2>3. Предпросмотр</h2><span className="muted text-xs">Первые 50 строк</span></div><div className="overflow-x-auto"><table className="w-full min-w-[720px] border-collapse text-left text-sm"><thead><tr className="border-b border-[#d3ccc0] text-xs uppercase tracking-[.08em] text-[#6d6a63]"><th className="p-3">Строка</th><th className="p-3">Артикул</th><th className="p-3">Название</th><th className="p-3">Результат</th></tr></thead><tbody>{rows.slice(0, 50).map((row) => <tr key={row.row} className="border-b border-[#ded8ce]"><td className="p-3">{row.row}</td><td className="p-3 font-bold">{row.article || "—"}</td><td className="p-3">{row.name || "—"}</td><td className={`p-3 ${row.status === "invalid" ? "text-[#8b2435]" : "text-[#34523e]"}`}>{row.message}</td></tr>)}</tbody></table></div></section>;
+  return <section className="pt-2"><div className="mb-4"><h2 className="section-title">Предпросмотр</h2><span className="muted text-xs">Первые 50 строк</span></div><div className="surface overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[720px] border-collapse text-left text-sm"><thead><tr className="border-b border-[--border] text-[11px] uppercase tracking-[.1em] text-[--text-tertiary]"><th className="px-4 py-3 font-semibold">Строка</th><th className="px-4 py-3 font-semibold">Артикул</th><th className="px-4 py-3 font-semibold">Название</th><th className="px-4 py-3 font-semibold">Результат</th></tr></thead><tbody>{rows.slice(0, 50).map((row) => <tr key={row.row} className="border-b border-[--border] last:border-0"><td className="px-4 py-3 text-[--text-tertiary]">{row.row}</td><td className="px-4 py-3 font-semibold">{row.article || "—"}</td><td className="px-4 py-3">{row.name || "—"}</td><td className={`px-4 py-3 font-medium ${row.status === "invalid" ? "text-[--error]" : "text-[--success]"}`}>{row.message}</td></tr>)}</tbody></table></div></div></section>;
 }

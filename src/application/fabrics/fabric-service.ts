@@ -28,6 +28,6 @@ export class FabricService {
   }
 
   async remove(id: string) {
-    if (!await this.repository.remove(id)) throw new ApiProblem("fabric_not_found", "Ткань не найдена или используется в конфигурации", 409);
+    if (!await this.repository.remove(id)) throw new ApiProblem("fabric_not_found", "Ткань не найдена", 404);
   }
 }

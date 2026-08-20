@@ -44,6 +44,6 @@ export function LoginForm() {
       <div className="relative"><input className="input pr-12" id="password" name="password" type={visible ? "text" : "password"} required aria-required="true" aria-invalid={Boolean(error)} aria-describedby={error ? "password-error" : undefined} autoComplete="current-password" defaultValue={isSupabase ? "" : "atelier2026"} /><button type="button" className="absolute right-1 top-1 grid size-11 place-items-center" aria-label={visible ? "Скрыть пароль" : "Показать пароль"} onClick={() => setVisible((value) => !value)}>{visible ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
     </Field>
     <Button className="w-full" type="submit" disabled={pending}><LockKeyhole size={17} aria-hidden="true" />{pending ? "Входим…" : "Войти"}</Button>
-    {!isSupabase && <p className="surface p-3 text-center text-xs text-[#69665f]">Демо: admin@portnoy.demo · atelier2026</p>}
+    {!isSupabase && <p className="rounded-[10px] border border-[--elev-1-border] bg-[--canvas-alt] p-3 text-center text-xs font-medium text-[--text-secondary]">Демо: admin@portnoy.demo · atelier2026</p>}
   </form>;
 }

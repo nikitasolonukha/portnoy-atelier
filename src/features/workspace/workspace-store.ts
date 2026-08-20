@@ -2,9 +2,34 @@
 
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
+import { photoAssetsFromUrl, swatchForColor } from "@/lib/fabric-from-import";
 import { requestAllPages, requestData } from "@/lib/http-client";
+import { importPackPhotoByArticle } from "@/lib/import-pack-photos";
 import type { ConfigurationGroup, Fabric, SavedConfiguration } from "@/types/domain";
 import { createInitialWorkspaceData, type WorkspaceData } from "./workspace-mode";
+
+function attachMissingImportPhotos(fabrics: Fabric[]): Fabric[] {
+  return fabrics.map((fabric) => {
+    const photo = fabric.assets?.find((asset) => asset.type === "photo" && asset.url);
+    if (photo) {
+      const normalized = photoAssetsFromUrl(photo.url)?.[0]?.url ?? photo.url;
+      if (normalized === photo.url) return fabric;
+      return {
+        ...fabric,
+        assets: fabric.assets?.map((asset) =>
+          asset.id === photo.id ? { ...asset, url: normalized } : asset,
+        ),
+      };
+    }
+    const packUrl = importPackPhotoByArticle[fabric.article];
+    if (!packUrl) return fabric;
+    return {
+      ...fabric,
+      swatch: fabric.swatch === "charcoal" ? swatchForColor(fabric.mainColor) : fabric.swatch,
+      assets: photoAssetsFromUrl(packUrl),
+    };
+  });
+}
 
 const mode = process.env.NEXT_PUBLIC_APP_MODE === "supabase" ? "supabase" : "demo";
 const usesSupabase = mode === "supabase";
@@ -82,6 +107,13 @@ export const useWorkspace = usesSupabase
   ? create<WorkspaceState>()(createWorkspaceState)
   : create<WorkspaceState>()(persist(createWorkspaceState, {
       name: "portnoy-workspace-v2",
-      version: 2,
+      version: 3,
       partialize: (state) => ({ fabrics: state.fabrics, configurations: state.configurations }),
+      migrate: (persisted) => {
+        const state = persisted as { fabrics?: Fabric[]; configurations?: SavedConfiguration[] };
+        return {
+          ...state,
+          fabrics: attachMissingImportPhotos(state.fabrics ?? []),
+        };
+      },
     }));

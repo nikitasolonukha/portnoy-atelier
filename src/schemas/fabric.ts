@@ -33,6 +33,14 @@ export const fabricInputSchema = z.object({
   pricePerMeter: fields.pricePerMeter,
   currency: fields.currency.optional().default("RUB"),
   description: fields.description.optional().default(""),
+  imageUrl: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (value) => !value || value.startsWith("/") || z.string().url().safeParse(value).success,
+      "Укажите URL фото или путь /fabrics/...",
+    ),
 });
 
 export const fabricPatchSchema = z.object({
@@ -49,6 +57,14 @@ export const fabricPatchSchema = z.object({
   currency: fields.currency.optional(),
   description: fields.description.optional(),
   isActive: z.boolean().optional(),
+  imageUrl: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (value) => !value || value.startsWith("/") || z.string().url().safeParse(value).success,
+      "Укажите URL фото или путь /fabrics/...",
+    ),
 });
 
 export type FabricInput = z.input<typeof fabricInputSchema>;

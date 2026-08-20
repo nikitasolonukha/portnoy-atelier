@@ -25,7 +25,9 @@
     "db:types": "node scripts/generate-db-types.mjs",
     "verify": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm test:integration && pnpm build && pnpm standalone:check",
     "container:up": "docker compose -p portnoy up -d --build app",
-    "container:down": "docker compose -p portnoy down"
+    "container:down": "docker compose -p portnoy down",
+    "3d:check-donors": "node scripts/3d/check-donors.mjs",
+    "3d:build-modular": "node scripts/3d/run-blender-build.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
@@ -37,10 +39,13 @@
     "lucide-react": "^0.544.0",
     "motion": "^12.23.18",
     "next": "16.3.1",
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.62.0",
     "tailwind-merge": "^3.3.1",
+    "three": "^0.185.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^4.1.11",
     "zustand": "^5.0.8"
@@ -51,6 +56,7 @@
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "@types/three": "^0.185.4",
     "@vitest/coverage-v8": "^3.2.4",
     "cross-env": "10.1.0",
     "eslint": "^9.36.0",

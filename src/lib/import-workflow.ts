@@ -1,6 +1,6 @@
 export const importFields = [
   "article", "name", "manufacturer", "collection", "composition", "mainColor", "pattern",
-  "weightGsm", "widthCm", "pricePerMeter", "currency", "description",
+  "weightGsm", "widthCm", "pricePerMeter", "currency", "description", "imageUrl",
 ] as const;
 
 export type ImportField = typeof importFields[number];
@@ -12,13 +12,14 @@ const aliases: Record<string, ImportField> = {
   "производитель": "manufacturer", "фабрика": "manufacturer", "manufacturer": "manufacturer", "brand": "manufacturer", "mill": "manufacturer",
   "коллекция": "collection", "collection": "collection",
   "состав": "composition", "composition": "composition",
-  "цвет": "mainColor", "color": "mainColor", "main color": "mainColor",
+  "цвет": "mainColor", "color": "mainColor", "main color": "mainColor", "maincolor": "mainColor",
   "рисунок": "pattern", "pattern": "pattern",
-  "плотность": "weightGsm", "вес": "weightGsm", "weight": "weightGsm", "weight gsm": "weightGsm",
-  "ширина": "widthCm", "width": "widthCm",
-  "цена": "pricePerMeter", "price": "pricePerMeter", "price per meter": "pricePerMeter",
+  "плотность": "weightGsm", "вес": "weightGsm", "weight": "weightGsm", "weight gsm": "weightGsm", "weightgsm": "weightGsm",
+  "ширина": "widthCm", "width": "widthCm", "widthcm": "widthCm",
+  "цена": "pricePerMeter", "price": "pricePerMeter", "price per meter": "pricePerMeter", "pricepermeter": "pricePerMeter",
   "валюта": "currency", "currency": "currency",
   "описание": "description", "description": "description",
+  "фото": "imageUrl", "изображение": "imageUrl", "картинка": "imageUrl", "image": "imageUrl", "imageurl": "imageUrl", "image url": "imageUrl", "photo": "imageUrl", "photo url": "imageUrl", "photourl": "imageUrl",
 };
 
 function normalizedHeader(value: string) {
