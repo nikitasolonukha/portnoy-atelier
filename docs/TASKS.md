@@ -72,6 +72,7 @@
 ## PR #8 CI fix (E2E selectors)
 
 - [x] Align demo/supabase E2E with V5/V6 markup: import heading `Сопоставление колонок`, compare title `Сравнение`, catalog names via `.fabric-tile__name` (not heading).
+- [x] Restore shell `aria-label="Текущий пользователь: …"`; supabase login helper filters visible; role-matrix `Добавить`; stage-one status chip.
 
 ## External activation checklist
 

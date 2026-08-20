@@ -27,7 +27,7 @@ export async function loginAs(page: Page, role: keyof typeof roleFixtures) {
   await page.locator("#password").fill(fixture.password);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByLabel(`Текущий пользователь: ${fixture.fullName}`)).toBeVisible();
+  await expect(page.getByLabel(`Текущий пользователь: ${fixture.fullName}`).filter({ visible: true })).toBeVisible();
 }
 
 export async function goToSummary(page: Page) {

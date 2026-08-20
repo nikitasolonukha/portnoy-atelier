@@ -79,7 +79,9 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           </nav>
 
           <div className="sidebar-foot">
-            <span className="micro-label mb-2 text-white/35" aria-hidden="true">{initials(user.fullName)}</span>
+            <span className="micro-label mb-2 text-white/35" aria-label={`Текущий пользователь: ${user.fullName}`}>
+              {initials(user.fullName)}
+            </span>
             <LogoutButton />
           </div>
         </aside>
@@ -97,7 +99,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
               <Menu size={18} aria-hidden="true" />
             </button>
             <p className="text-[11px] font-semibold uppercase tracking-[.14em] text-[--text-secondary]">Portnoy</p>
-            <span className="mobile-bar__user" aria-label={user.fullName}>
+            <span className="mobile-bar__user" aria-label={`Текущий пользователь: ${user.fullName}`}>
               {initials(user.fullName)}
             </span>
           </header>
