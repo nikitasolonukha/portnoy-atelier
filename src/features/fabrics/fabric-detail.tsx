@@ -8,6 +8,7 @@ import { useWorkspace } from "@/features/workspace/workspace-store";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { Button, ButtonLink } from "@/components/ui/primitives";
 import { FabricMedia } from "@/components/ui/fabric-media";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { fabricTexture } from "@/lib/fabric-visual";
 import { useCurrentUser } from "@/features/auth/current-user-context";
 import { can } from "@/lib/permissions";
@@ -20,6 +21,7 @@ export function FabricDetail({ id }: { id: string }) {
   const hydrate = useWorkspace((state) => state.hydrate);
   const [pending, setPending] = useState<"archive" | "delete" | null>(null);
   const [error, setError] = useState("");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (!fabric) {
     return (
@@ -108,7 +110,14 @@ export function FabricDetail({ id }: { id: string }) {
           {texture && (
             <div className="mt-4">
               <p className="micro-label mb-2">Texture map</p>
-              <img src={texture.url} alt={texture.originalFilename} className="detail-photo aspect-[5/3] w-full max-w-sm object-cover" />
+              <button
+                type="button"
+                className="block w-full max-w-sm overflow-hidden rounded-[12px] text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--accent]"
+                onClick={() => setLightboxOpen(true)}
+                aria-label={`Открыть текстуру ${texture.originalFilename} на весь экран`}
+              >
+                <img src={texture.url} alt={texture.originalFilename} className="detail-photo aspect-[5/3] w-full object-cover" />
+              </button>
             </div>
           )}
         </div>
@@ -167,6 +176,15 @@ export function FabricDetail({ id }: { id: string }) {
           <p className="mt-3 text-xs" style={{ color: "rgba(245,241,233,.4)" }}>Обновлено {formatDate(fabric.updatedAt)}</p>
         </div>
       </div>
+
+      {texture && (
+        <ImageLightbox
+          open={lightboxOpen}
+          src={texture.url}
+          alt={texture.originalFilename}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </div>
   );
 }

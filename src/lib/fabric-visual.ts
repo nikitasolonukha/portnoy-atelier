@@ -1,7 +1,9 @@
 import type { Fabric, FabricAsset } from "@/types/domain";
 
 export function fabricPhoto(fabric: Pick<Fabric, "assets">) {
-  return (fabric.assets ?? []).find((asset) => asset.type === "photo");
+  return (fabric.assets ?? [])
+    .filter((asset) => asset.type === "photo")
+    .sort((left, right) => left.sortOrder - right.sortOrder)[0];
 }
 
 export function fabricTexture(fabric: Pick<Fabric, "assets">) {

@@ -9,6 +9,50 @@ import { createClient } from "@/lib/supabase/server";
 
 type Context = { params: Promise<{ fabricId: string }> };
 const assetTypeSchema = z.enum(["photo", "texture"]);
+const reorderSchema = z.object({
+  items: z.array(z.object({
+    id: z.string().uuid(),
+    sortOrder: z.number().int().min(0),
+  })).min(1),
+});
+
+export async function PATCH(request: NextRequest, context: Context) {
+  try {
+    const actor = await requireActor();
+    requireRole(actor, ["admin", "tailor"]);
+    if (getServerEnv().APP_MODE !== "supabase") throw new ApiProblem("persistent_storage_required", "Управление изображениями доступно в режиме Supabase", 409);
+
+    const { fabricId } = await context.params;
+    const body = reorderSchema.parse(await request.json());
+    const client = await createClient();
+    const ids = body.items.map((item) => item.id);
+    const { data: existing, error: readError } = await client
+      .from("fabric_assets")
+      .select("id,type")
+      .eq("fabric_id", fabricId)
+      .in("id", ids);
+    if (readError) throw new ApiProblem("asset_read_failed", "Не удалось проверить изображения", 500);
+    if (!existing || existing.length !== ids.length) throw new ApiProblem("asset_not_found", "Изображение не найдено", 404);
+    if (existing.some((asset) => asset.type !== "photo")) throw new ApiProblem("asset_type_invalid", "Менять порядок можно только у фотографий", 422);
+
+    for (const item of body.items) {
+      const { error } = await client.from("fabric_assets").update({ sort_order: item.sortOrder }).eq("id", item.id).eq("fabric_id", fabricId);
+      if (error) throw new ApiProblem("asset_reorder_failed", "Не удалось сохранить порядок фотографий", 500);
+    }
+
+    const { data: refreshed, error: refreshError } = await client
+      .from("fabric_assets")
+      .select("*")
+      .eq("fabric_id", fabricId)
+      .eq("type", "photo")
+      .order("sort_order", { ascending: true });
+    if (refreshError) throw new ApiProblem("asset_read_failed", "Не удалось загрузить обновлённые фотографии", 500);
+    return NextResponse.json(apiSuccess(refreshed ?? []));
+  } catch (error) {
+    const response = toErrorResponse(error);
+    return NextResponse.json(response.body, { status: response.status });
+  }
+}
 
 export async function POST(request: NextRequest, context: Context) {
   const uploadedPaths: string[] = [];

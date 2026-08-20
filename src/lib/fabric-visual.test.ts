@@ -26,4 +26,10 @@ describe("fabric-visual", () => {
     expect(fabricTexture({ assets: [photo] })).toBeUndefined();
     expect(fabricPhoto({ assets: [photo] })?.type).toBe("photo");
   });
+
+  it("uses the lowest sortOrder photo as the main catalog image", () => {
+    const secondary = { ...photo, id: "p0", sortOrder: 2, url: "/secondary.png" };
+    const primary = { ...photo, id: "p2", sortOrder: 0, url: "/primary.png" };
+    expect(fabricPhoto({ assets: [secondary, primary] })?.url).toBe("/primary.png");
+  });
 });
