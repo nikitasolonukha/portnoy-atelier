@@ -41,7 +41,7 @@ test("250 fabrics remain reachable through pagination, search and the configurat
 
     await page.goto("/fabrics");
     await page.getByLabel("Поиск тканей").fill(targetArticle);
-    await expect(page.getByRole("link").filter({ has: page.getByRole("heading", { name: targetName, exact: true }) })).toBeVisible();
+    await expect(page.getByRole("link").filter({ has: page.locator(".fabric-tile__name", { hasText: targetName }) })).toBeVisible();
 
     await page.goto(`/configurator?fabric=${target.id}`);
     await expect(page.getByRole("button", { name: new RegExp(targetName) })).toBeVisible();

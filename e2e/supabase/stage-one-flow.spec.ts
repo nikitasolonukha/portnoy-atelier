@@ -107,7 +107,7 @@ test("real Supabase Stage 1 flow persists through refresh, direct URLs and logou
   await page.goto("/fabrics");
   await page.getByLabel("Статус").selectOption("archived");
   await page.getByLabel("Поиск тканей").fill(article);
-  await page.getByRole("link").filter({ has: page.getByRole("heading", { name: updatedFabricName, exact: true }) }).click();
+  await page.getByRole("link").filter({ has: page.locator(".fabric-tile__name", { hasText: updatedFabricName }) }).click();
   await page.getByRole("button", { name: "Вернуть из архива" }).click();
   await expect(page.getByText("Активна", { exact: true })).toBeVisible();
 

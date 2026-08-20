@@ -57,7 +57,7 @@ test("compare includes fabric and all six suit option groups", async ({ page }) 
   await checkboxes.nth(0).check();
   await checkboxes.nth(1).check();
   await page.getByRole("button", { name: "Сравнить 2/2" }).click();
-  await expect(page.getByRole("heading", { name: "Сравнение вариантов" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Сравнение" })).toBeVisible();
   await expect(page.locator("[data-compare-row='fabric']")).toBeVisible();
   await expect(page.locator("[data-compare-row]")).toHaveCount(7);
 });
@@ -76,6 +76,6 @@ test("dirty draft warns before browser reload", async ({ page }) => {
 test("invalid compare IDs show an explicit empty state instead of fallback records", async ({ page }) => {
   await page.goto("/configurations/compare?left=missing-left&right=missing-right");
   await expect(page.getByRole("alert").filter({ has: page.getByRole("heading", { name: "Нужно выбрать две разные конфигурации" }) })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Сравнение вариантов" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Сравнение" })).toHaveCount(0);
   await expect(page.locator("[data-compare-row]")).toHaveCount(0);
 });

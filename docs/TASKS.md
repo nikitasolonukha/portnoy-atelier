@@ -69,10 +69,14 @@
 - [x] Client showcase screenshots in `artifacts/client-showcase/` (desktop + iPad): dashboard, catalog, detail, 3D/2D configurator, configurations, login.
 - [x] Showcase polish: DEMO label removed; fabric dossier fits viewport; 3D overlay cleaned; iPad dashboard stacked; screenshots retaken.
 
+## PR #8 CI fix (E2E selectors)
+
+- [x] Align demo/supabase E2E with V5/V6 markup: import heading `Сопоставление колонок`, compare title `Сравнение`, catalog names via `.fabric-tile__name` (not heading).
+
 ## External activation checklist
 
 - [x] `fix/final-stage-one-hardening` pushed; draft PR [#7](https://github.com/nikitasolonukha/portnoy-atelier/pull/7) targets `main`.
-- [ ] Obtain green GitHub Actions evidence for quality, demo E2E and Supabase jobs on the final HEAD.
+- [ ] Obtain green GitHub Actions evidence for quality, demo E2E and Supabase jobs on PR [#8](https://github.com/nikitasolonukha/portnoy-atelier/pull/8).
 - [ ] Create/link staging Supabase and populate secrets outside git.
 - [ ] Apply migrations and repeat admin/tailor/employee browser + direct RLS matrix on staging.
 - [ ] Create staging deployment and attach staging URL.

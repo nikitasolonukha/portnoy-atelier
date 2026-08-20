@@ -15,7 +15,7 @@ test("real Supabase critical flow works on the current responsive device", async
     await loginAs(page, "admin");
     await page.goto("/fabrics");
     await page.getByLabel("Поиск тканей").fill(article);
-    await page.getByRole("link").filter({ has: page.getByRole("heading", { name: fabricName, exact: true }) }).click();
+    await page.getByRole("link").filter({ has: page.locator(".fabric-tile__name", { hasText: fabricName }) }).click();
     await expect(page.getByRole("heading", { name: fabricName })).toBeVisible();
     await page.getByRole("link", { name: "В конфигуратор" }).click();
     await goToSummary(page);

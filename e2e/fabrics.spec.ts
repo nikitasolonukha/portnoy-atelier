@@ -26,7 +26,7 @@ test("CSV import maps columns, previews and adds all valid rows", async ({ page 
     mimeType: "text/csv",
     buffer: Buffer.from(`SKU,Title,Brand\n${firstArticle},Test Navy Fresco,Test Mill\n${secondArticle},Test Grey Flannel,Test Mill`, "utf8"),
   });
-  await expect(page.getByRole("heading", { name: "1. Сопоставление колонок" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Сопоставление колонок" })).toBeVisible();
   await page.getByRole("button", { name: "Проверить строки" }).click();
   await expect(page.getByText(firstArticle.toUpperCase(), { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /Импортировать 2 строк/ }).click();
@@ -34,7 +34,7 @@ test("CSV import maps columns, previews and adds all valid rows", async ({ page 
   await expect(page.getByText(/Создано: 2\. Обновлено: 0\. Пропущено: 0\. Ошибок: 0\./)).toBeVisible();
   await page.getByRole("link", { name: "Открыть каталог" }).click();
   await page.getByPlaceholder("Артикул, название, фабрика").fill(firstArticle);
-  await expect(page.getByRole("heading", { name: "Test Navy Fresco" })).toBeVisible();
+  await expect(page.locator(".fabric-tile__name", { hasText: "Test Navy Fresco" })).toBeVisible();
 });
 
 test("XLSX and legacy XLS imports use the same validated workflow", async ({ page }) => {
@@ -52,7 +52,7 @@ test("XLSX and legacy XLS imports use the same validated workflow", async ({ pag
 
     await page.goto("/fabrics/import");
     await page.locator('input[type="file"]').setInputFiles({ name: `fabrics.${file.extension}`, mimeType: "application/octet-stream", buffer });
-    await expect(page.getByRole("heading", { name: "1. Сопоставление колонок" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Сопоставление колонок" })).toBeVisible();
     await page.getByRole("button", { name: "Проверить строки" }).click();
     await expect(page.getByText(file.article, { exact: true })).toBeVisible();
     await page.getByRole("button", { name: /Импортировать 1 строк/ }).click();
