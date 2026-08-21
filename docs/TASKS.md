@@ -69,7 +69,12 @@
 - [x] Client showcase screenshots in `artifacts/client-showcase/` (desktop + iPad): dashboard, catalog, detail, 3D/2D configurator, configurations, login.
 - [x] Showcase polish: DEMO label removed; fabric dossier fits viewport; 3D overlay cleaned; iPad dashboard stacked; screenshots retaken.
 
-## Fabric import photos (Supabase / production)
+## Configuration option label encoding
+
+Acceptance criteria:
+- [x] Forward migration rewrites Stage 1 option `name`/`description` to correct UTF-8 Russian by group+key.
+- [x] Seed upserts labels on conflict so local resets stay correct.
+- [x] pgTAP asserts jacket/single and lapel/peak labels.
 
 Acceptance criteria:
 - [x] CSV/XLS mapped `imageUrl`/`фото` on Supabase fetches public https JPEG/PNG/WebP (≤10 MB) into private Storage.

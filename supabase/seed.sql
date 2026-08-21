@@ -13,4 +13,7 @@ join (values
   ('trousers','classic','Классические',null,0), ('trousers','pleated','С одной складкой',null,1), ('trousers','double-pleat','С двумя складками',null,2),
   ('vest','none','Без жилета',null,0), ('vest','single','Однобортный',null,1), ('vest','double','Двубортный',null,2)
 ) as options(group_key,key,name,description,sort_order) on groups.key = options.group_key
-on conflict (group_id,key) do nothing;
+on conflict (group_id,key) do update
+set name = excluded.name,
+    description = excluded.description,
+    sort_order = excluded.sort_order;
