@@ -136,6 +136,12 @@ components:
         pricePerMeter: { type: number, minimum: 0 }
         currency: { type: string, enum: [RUB, EUR, USD] }
         description: { type: string, maxLength: 2000 }
+        imageUrl:
+          type: string
+          description: >
+            Optional public https image URL (JPEG/PNG/WebP, max 10MB). On Supabase import the bytes are
+            fetched server-side into private fabric-assets Storage. Relative /fabrics/... paths are demo-only.
+            Private/link-local hosts are rejected.
     ConfigurationInput:
       type: object
       required: [name, fabricId, settings]

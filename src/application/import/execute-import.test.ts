@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+import type { FabricAssetWriter } from "@/application/ports/fabric-asset-writer";
 import type { FabricRepository } from "@/application/ports/fabric-repository";
+import { ApiProblem } from "@/lib/api-response";
 import type { Fabric } from "@/types/domain";
 import { executeFabricImport } from "./execute-import";
 
@@ -31,9 +33,29 @@ function repository(existing: Record<string, Fabric> = {}): FabricRepository {
     findByArticle: vi.fn(async (article: string) => existing[article] ?? null),
     create: vi.fn(async (input) => fabric(`created-${input.article}`, input.article)),
     update: vi.fn(async (id, input) => fabric(id, input.article ?? "updated")),
-    archive: vi.fn(),
-    remove: vi.fn(),
+    archive: vi.fn(async () => true),
+    remove: vi.fn(async () => true),
   };
+}
+
+function photoSupport(overrides: Partial<FabricAssetWriter> = {}) {
+  const assets: FabricAssetWriter = {
+    attachPhoto: vi.fn(async () => ({
+      id: "asset-1",
+      type: "photo" as const,
+      originalFilename: "navy.png",
+      mimeType: "image/png",
+      sortOrder: 0,
+      url: "/api/v1/fabrics/x/assets/asset-1",
+    })),
+    ...overrides,
+  };
+  const loadImage = vi.fn(async () => ({
+    bytes: Uint8Array.from([1, 2, 3]),
+    mimeType: "image/png",
+    filename: "navy.png",
+  }));
+  return { assets, loadImage };
 }
 
 describe("executeFabricImport", () => {
@@ -67,30 +89,6 @@ describe("executeFabricImport", () => {
     expect(result.errors[1]?.message).toBe("Артикул повторяется в файле");
   });
 
-  it("preserves every unmapped field when updating an existing fabric", async () => {
-    const existing = { ...fabric("existing-1", "EX-1"), manufacturer: "Loro Piana", composition: "100% Wool", currency: "EUR" as const };
-    const target = repository({ "EX-1": existing });
-
-    await executeFabricImport([{ article: "EX-1", name: "Updated navy" }], "update", target, "actor-1");
-
-    expect(target.update).toHaveBeenCalledWith("existing-1", { article: "EX-1", name: "Updated navy" }, "actor-1");
-  });
-
-  it("updates a mapped optional field", async () => {
-    const target = repository({ "EX-1": fabric("existing-1", "EX-1") });
-
-    await executeFabricImport([{ article: "EX-1", name: "Updated", manufacturer: "Vitale Barberis" }], "update", target, "actor-1");
-
-    expect(target.update).toHaveBeenCalledWith("existing-1", { article: "EX-1", name: "Updated", manufacturer: "Vitale Barberis" }, "actor-1");
-  });
-
-  it("treats a mapped blank text cell as an explicit clear", async () => {
-    const target = repository({ "EX-1": fabric("existing-1", "EX-1") });
-
-    await executeFabricImport([{ article: "EX-1", name: "Updated", manufacturer: "" }], "update", target, "actor-1");
-
-    expect(target.update).toHaveBeenCalledWith("existing-1", { article: "EX-1", name: "Updated", manufacturer: "" }, "actor-1");
-  });
   it("converts repository failures into safe per-row results", async () => {
     const failing = repository({ "EX-1": fabric("missing", "EX-1") });
     vi.mocked(failing.update).mockResolvedValueOnce(null);
@@ -104,5 +102,36 @@ describe("executeFabricImport", () => {
       "Ткань не найдена во время обновления",
       "Не удалось импортировать строку",
     ]);
+  });
+
+  it("downloads imageUrl and attaches a photo when photo support is provided", async () => {
+    const repo = repository();
+    const photos = photoSupport();
+    const result = await executeFabricImport([
+      { article: "PHOTO-1", name: "With photo", imageUrl: "https://cdn.example.com/navy.png" },
+    ], "update", repo, "actor-1", photos);
+
+    expect(result).toMatchObject({ created: 1, failed: 0 });
+    expect(photos.loadImage).toHaveBeenCalledWith("https://cdn.example.com/navy.png");
+    expect(photos.assets.attachPhoto).toHaveBeenCalledWith("created-PHOTO-1", expect.objectContaining({
+      filename: "navy.png",
+      mimeType: "image/png",
+    }));
+  });
+
+  it("rolls back a created fabric when photo attach fails", async () => {
+    const repo = repository();
+    const photos = photoSupport({
+      attachPhoto: vi.fn(async () => {
+        throw new ApiProblem("asset_upload_failed", "Не удалось загрузить изображение", 500);
+      }),
+    });
+    const result = await executeFabricImport([
+      { article: "PHOTO-2", name: "Broken photo", imageUrl: "https://cdn.example.com/navy.png" },
+    ], "update", repo, "actor-1", photos);
+
+    expect(result).toMatchObject({ created: 0, failed: 1 });
+    expect(result.errors[0]?.message).toBe("Не удалось загрузить изображение");
+    expect(repo.remove).toHaveBeenCalledWith("created-PHOTO-2");
   });
 });

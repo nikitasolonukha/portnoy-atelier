@@ -69,6 +69,14 @@
 - [x] Client showcase screenshots in `artifacts/client-showcase/` (desktop + iPad): dashboard, catalog, detail, 3D/2D configurator, configurations, login.
 - [x] Showcase polish: DEMO label removed; fabric dossier fits viewport; 3D overlay cleaned; iPad dashboard stacked; screenshots retaken.
 
+## Fabric import photos (Supabase / production)
+
+Acceptance criteria:
+- [x] CSV/XLS mapped `imageUrl`/`фото` on Supabase fetches public https JPEG/PNG/WebP (≤10 MB) into private Storage.
+- [x] SSRF guard blocks private/link-local hosts and non-https URLs; relative `/fabrics/...` stays demo-only.
+- [x] Create + failed photo rolls back fabric (delete, else archive); row reports a safe error.
+- [x] Unit coverage for remote-image + execute-import photo path; Supabase E2E covers URL import when fixture host is reachable.
+
 ## PR #8 CI fix (E2E selectors)
 
 - [x] Align demo/supabase E2E with V5/V6 markup: import heading `Сопоставление колонок`, compare title `Сравнение`, catalog names via `.fabric-tile__name` (not heading).

@@ -16,7 +16,7 @@ const usesSupabase = process.env.NEXT_PUBLIC_APP_MODE === "supabase";
 const fieldLabels: Record<ImportField, string> = {
   article: "Артикул", name: "Название", manufacturer: "Производитель", collection: "Коллекция",
   composition: "Состав", mainColor: "Основной цвет", pattern: "Рисунок", weightGsm: "Плотность, г/м²",
-  widthCm: "Ширина, см", pricePerMeter: "Цена за метр", currency: "Валюта", description: "Описание", imageUrl: "Фото (URL)",
+  widthCm: "Ширина, см", pricePerMeter: "Цена за метр", currency: "Валюта", description: "Описание", imageUrl: "Фото (https URL)",
 };
 
 type Phase = "mapping" | "preview" | "running" | "result";
@@ -145,7 +145,7 @@ export function ImportWorkspace() {
       <div>
         <p className="micro-label">Bulk material import</p>
         <h1 className="page-title mt-3">Импорт тканей</h1>
-        <p className="mt-3 max-w-xl text-sm muted">XLSX, XLS или CSV — сопоставление, проверка, импорт.</p>
+        <p className="mt-3 max-w-xl text-sm muted">XLSX, XLS или CSV — сопоставление, проверка, импорт. Колонку «Фото» замапьте на https URL изображения — на проде фото скачается в Storage.</p>
       </div>
       <ButtonLink href="/fabrics" variant="secondary" className="dashboard-hero__cta">Каталог</ButtonLink>
     </header>
