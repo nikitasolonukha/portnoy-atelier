@@ -34,10 +34,14 @@ test("configuration uses canonical URL, survives reload and repeated save update
 test("duplicate opens an independent canonical copy", async ({ page }) => {
   await page.goto("/configurations");
   const original = page.getByRole("link", { name: "Городской синий", exact: true });
-  await original.click();
-  await expect(page).toHaveURL(/\/configurator\/[^/?]+$/);
+  await Promise.all([
+    page.waitForURL(/\/configurator\/[^/?]+$/),
+    original.click(),
+  ]);
   const originalUrl = page.url();
-  await page.goto("/configurations");
+  await page.waitForLoadState("networkidle");
+  await page.goto("/configurations", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/configurations/);
   await page.getByRole("button", { name: "Дублировать Городской синий", exact: true }).click();
   await expect(page).toHaveURL(/\/configurator\/[^/?]+$/);
   expect(page.url()).not.toBe(originalUrl);
