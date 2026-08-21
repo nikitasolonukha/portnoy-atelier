@@ -22,7 +22,6 @@ import {
   type DraftPhoto,
 } from "@/lib/draft-photos";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
-import type { FabricAsset } from "@/types/domain";
 
 const usesSupabase = process.env.NEXT_PUBLIC_APP_MODE === "supabase";
 
@@ -69,15 +68,13 @@ export function FabricForm({ fabricId }: { fabricId?: string }) {
     navigateAfterSave,
   } = useUnsavedChangesGuard(dirty);
 
-  useEffect(() => {
-    if (!fabric) return;
-    if (seededFabricId === fabric.id) return;
+  if (fabric && seededFabricId !== fabric.id) {
     const seeded = draftPhotosFromAssets(fabric.assets ?? []);
     setDraftPhotos(seeded);
     setSeedPhotos(seeded);
     setSeededFabricId(fabric.id);
     setRemovedTextureId(null);
-  }, [fabric, seededFabricId]);
+  }
 
   const existingTexture = (fabric?.assets ?? []).find(
     (asset) => asset.type === "texture" && asset.id !== removedTextureId,
