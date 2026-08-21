@@ -28,7 +28,7 @@ test("supabase CSV import downloads https imageUrl into fabric storage", async (
   await expect(page.getByText(/Создано: 1\. Обновлено: 0\. Пропущено: 0\. Ошибок: 0\./)).toBeVisible();
 
   await page.goto("/fabrics");
-  await page.getByPlaceholder("Поиск").fill(article);
+  await page.getByPlaceholder("Артикул, название, фабрика").fill(article);
   await page.getByRole("link", { name: /Imported with URL/ }).click();
   await expect(page.getByRole("heading", { name: "Imported with URL" })).toBeVisible();
   await expect(page.locator("img").first()).toBeVisible();

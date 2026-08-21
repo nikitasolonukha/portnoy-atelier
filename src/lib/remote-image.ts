@@ -3,7 +3,7 @@ import { isIP } from "node:net";
 import { ApiProblem } from "@/lib/api-response";
 import { detectImageMime, MAX_IMAGE_BYTES, safeUploadName } from "@/lib/image-upload";
 
-const FETCH_TIMEOUT_MS = 15_000;
+const FETCH_TIMEOUT_MS = 8_000;
 const MAX_REDIRECTS = 3;
 
 export type RemoteImage = {
@@ -32,6 +32,8 @@ export function isBlockedIpAddress(address: string): boolean {
   if (a === 169 && b === 254) return true;
   if (a === 172 && b >= 16 && b <= 31) return true;
   if (a === 192 && b === 168) return true;
+  // Carrier-grade NAT / shared address space — treat as non-public for SSRF.
+  if (a === 100 && b >= 64 && b <= 127) return true;
   return false;
 }
 
@@ -93,7 +95,10 @@ export async function fetchRemoteImage(
         method: "GET",
         redirect: "manual",
         signal: controller.signal,
-        headers: { Accept: "image/jpeg,image/png,image/webp,image/*;q=0.8,*/*;q=0.5" },
+        headers: {
+          Accept: "image/jpeg,image/png,image/webp,image/*;q=0.8,*/*;q=0.5",
+          "User-Agent": "PortnoyAtelier/1.0 (+fabric-import)",
+        },
       });
     } catch (cause) {
       if (cause instanceof Error && cause.name === "AbortError") {

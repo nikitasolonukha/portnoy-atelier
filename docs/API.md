@@ -26,7 +26,7 @@ Repository использует стабильную сортировку `updat
 - `POST /fabrics/{fabricId}/assets`
 - `DELETE /fabrics/{fabricId}/assets/{assetId}`
 - `PATCH /fabrics/{fabricId}/assets` — atomic photo reorder (`reorder_fabric_photos`); `409 photo_order_conflict` when the client photo set is stale; `403` for employee
-- `POST /fabric-imports` — optional mapped `imageUrl` downloads a public https image into Storage (Supabase mode only; demo keeps URL/path assets locally)
+- `POST /fabric-imports` — optional mapped `imageUrl` downloads a public https image into Storage (Supabase mode only; demo keeps URL/path assets locally). Route `maxDuration` is 60s for multi-row photo downloads.
 - `GET/POST /configurations`
 - `GET/PATCH/DELETE /configurations/{configurationId}`
 - `GET /configuration-groups`

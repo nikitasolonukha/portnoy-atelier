@@ -76,6 +76,7 @@ Acceptance criteria:
 - [x] SSRF guard blocks private/link-local hosts and non-https URLs; relative `/fabrics/...` stays demo-only.
 - [x] Create + failed photo rolls back fabric (delete, else archive); row reports a safe error.
 - [x] Unit coverage for remote-image + execute-import photo path; Supabase E2E covers URL import when fixture host is reachable.
+- [x] Production import route `maxDuration=60` so multi-row https photo downloads do not hit the default Vercel timeout.
 
 ## PR #8 CI fix (E2E selectors)
 
