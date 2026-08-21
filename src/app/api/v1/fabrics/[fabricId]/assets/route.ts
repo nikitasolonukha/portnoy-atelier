@@ -4,6 +4,7 @@ import { requireActor, requireRole } from "@/infrastructure/auth/actor";
 import { toErrorResponse } from "@/interface/http/respond";
 import { ApiProblem, apiSuccess } from "@/lib/api-response";
 import { getServerEnv } from "@/lib/env";
+import { MAX_FABRIC_PHOTOS } from "@/lib/draft-photos";
 import { safeUploadName, validateImageUpload } from "@/lib/image-upload";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,6 +17,30 @@ const reorderSchema = z.object({
   })).min(1),
 });
 
+function mapReorderRpcError(error: { message?: string; code?: string }) {
+  const message = error.message ?? "";
+  if (message.includes("photo_order_conflict") || error.code === "P0001") {
+    return new ApiProblem(
+      "photo_order_conflict",
+      "Состав фотографий изменился. Обновите страницу и повторите.",
+      409,
+    );
+  }
+  if (message.includes("photo_order_duplicate")) {
+    return new ApiProblem("photo_order_invalid", "Порядок фотографий содержит повторяющиеся идентификаторы", 422);
+  }
+  if (message.includes("photo_order_type_invalid")) {
+    return new ApiProblem("asset_type_invalid", "Менять порядок можно только у фотографий", 422);
+  }
+  if (message.includes("photo_order_forbidden") || error.code === "42501") {
+    return new ApiProblem("forbidden", "Недостаточно прав", 403);
+  }
+  if (message.includes("photo_order_invalid")) {
+    return new ApiProblem("photo_order_invalid", "Некорректный порядок фотографий", 422);
+  }
+  return new ApiProblem("asset_reorder_failed", "Не удалось сохранить порядок фотографий", 500);
+}
+
 export async function PATCH(request: NextRequest, context: Context) {
   try {
     const actor = await requireActor();
@@ -24,30 +49,25 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     const { fabricId } = await context.params;
     const body = reorderSchema.parse(await request.json());
-    const client = await createClient();
-    const ids = body.items.map((item) => item.id);
-    const { data: existing, error: readError } = await client
-      .from("fabric_assets")
-      .select("id,type")
-      .eq("fabric_id", fabricId)
-      .in("id", ids);
-    if (readError) throw new ApiProblem("asset_read_failed", "Не удалось проверить изображения", 500);
-    if (!existing || existing.length !== ids.length) throw new ApiProblem("asset_not_found", "Изображение не найдено", 404);
-    if (existing.some((asset) => asset.type !== "photo")) throw new ApiProblem("asset_type_invalid", "Менять порядок можно только у фотографий", 422);
-
-    for (const item of body.items) {
-      const { error } = await client.from("fabric_assets").update({ sort_order: item.sortOrder }).eq("id", item.id).eq("fabric_id", fabricId);
-      if (error) throw new ApiProblem("asset_reorder_failed", "Не удалось сохранить порядок фотографий", 500);
+    const orderedIds = [...body.items]
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map((item) => item.id);
+    const sortOrders = body.items.map((item) => item.sortOrder).sort((left, right) => left - right);
+    const expectedOrders = orderedIds.map((_, index) => index);
+    if (sortOrders.join(",") !== expectedOrders.join(",")) {
+      throw new ApiProblem("photo_order_invalid", "Порядок фотографий должен быть непрерывным с нуля", 422);
+    }
+    if (new Set(orderedIds).size !== orderedIds.length) {
+      throw new ApiProblem("photo_order_invalid", "Порядок фотографий содержит повторяющиеся идентификаторы", 422);
     }
 
-    const { data: refreshed, error: refreshError } = await client
-      .from("fabric_assets")
-      .select("*")
-      .eq("fabric_id", fabricId)
-      .eq("type", "photo")
-      .order("sort_order", { ascending: true });
-    if (refreshError) throw new ApiProblem("asset_read_failed", "Не удалось загрузить обновлённые фотографии", 500);
-    return NextResponse.json(apiSuccess(refreshed ?? []));
+    const client = await createClient();
+    const { data, error } = await client.rpc("reorder_fabric_photos", {
+      p_fabric_id: fabricId,
+      p_ordered_ids: orderedIds,
+    });
+    if (error) throw mapReorderRpcError(error);
+    return NextResponse.json(apiSuccess(data ?? []));
   } catch (error) {
     const response = toErrorResponse(error);
     return NextResponse.json(response.body, { status: response.status });
@@ -67,8 +87,8 @@ export async function POST(request: NextRequest, context: Context) {
     const body = await request.formData();
     const type = assetTypeSchema.parse(body.get("assetType") ?? "photo");
     const files = body.getAll("files").filter((entry): entry is File => entry instanceof File);
-    const maxFiles = type === "texture" ? 1 : 12;
-    if (!files.length || files.length > maxFiles) throw new ApiProblem("image_count_invalid", type === "texture" ? "Выберите одну текстуру" : "Выберите от 1 до 12 изображений", 422);
+    const maxFiles = type === "texture" ? 1 : MAX_FABRIC_PHOTOS;
+    if (!files.length || files.length > maxFiles) throw new ApiProblem("image_count_invalid", type === "texture" ? "Выберите одну текстуру" : `Выберите от 1 до ${MAX_FABRIC_PHOTOS} изображений`, 422);
 
     const client = await createClient();
     const { data: fabric, error: fabricError } = await client.from("fabrics").select("id").eq("id", fabricId).maybeSingle();
@@ -76,6 +96,10 @@ export async function POST(request: NextRequest, context: Context) {
     if (!fabric) throw new ApiProblem("fabric_not_found", "Ткань не найдена", 404);
 
     const { count: photoCount } = await client.from("fabric_assets").select("id", { count: "exact", head: true }).eq("fabric_id", fabricId).eq("type", "photo");
+    if (type === "photo" && (photoCount ?? 0) + files.length > MAX_FABRIC_PHOTOS) {
+      throw new ApiProblem("image_count_invalid", `Можно добавить не больше ${MAX_FABRIC_PHOTOS} фотографий`, 422);
+    }
+
     const assets = [];
     for (const [index, file] of files.entries()) {
       const bytes = new Uint8Array(await file.arrayBuffer());

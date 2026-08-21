@@ -29,6 +29,14 @@ test("fabric form supports save to configurator and unsaved leave guard", async 
   await page.getByRole("button", { name: "Назад" }).click();
   await expect(page.getByRole("heading", { name: "Есть несохранённые изменения." })).toBeVisible();
   await page.getByRole("button", { name: "Остаться" }).click();
+
+  const overview = page.getByRole("link", { name: "Обзор" });
+  if (!(await overview.isVisible())) {
+    await page.getByRole("button", { name: "Открыть меню" }).click();
+  }
+  await overview.click();
+  await expect(page.getByRole("heading", { name: "Есть несохранённые изменения." })).toBeVisible();
+  await page.getByRole("button", { name: "Остаться" }).click();
   await page.getByRole("button", { name: "Сохранить и открыть в конфигураторе" }).click();
   await expect(page).toHaveURL(/\/configurator\?fabric=/);
   await expect(page.getByRole("heading", { name: "Конфигуратор" })).toBeVisible();

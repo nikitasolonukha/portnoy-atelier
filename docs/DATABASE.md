@@ -6,7 +6,7 @@ PostgreSQL/Supabase schema is defined only by ordered files in `supabase/migrati
 
 - `profiles`: Auth projection, role, active flag.
 - `fabrics`: normalized searchable material record with case-insensitive article uniqueness.
-- `fabric_assets`: private photo/texture metadata; one texture per fabric; unique storage path.
+- `fabric_assets`: private photo/texture metadata; one texture per fabric; unique storage path. Photo presentation order is `sort_order` (0 = main catalog/detail photo). Atomic reorder is `public.reorder_fabric_photos(fabric_id, ordered_ids)` (SECURITY INVOKER); stale or partial ID sets raise `photo_order_conflict`.
 - `configuration_groups/options`: шесть data-driven групп опций костюма; ткань не является option group и хранится через `configurations.fabric_id`.
 - `configurations`: fabric reference and validated JSONB option map.
 - `fabric_imports`: полный ledger с `created/updated/skipped/failed`, статусом, стратегией дублей и actor-scoped content hash для идемпотентности.

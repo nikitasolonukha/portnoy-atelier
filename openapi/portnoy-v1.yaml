@@ -73,7 +73,10 @@ paths:
       responses: { "201": { description: Assets uploaded }, "413": { $ref: "#/components/responses/Error" }, "415": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } }
     patch:
       operationId: reorderFabricPhotos
-      summary: Reorder fabric photos; sortOrder 0 is the main catalog photo
+      summary: Atomically reorder fabric photos via reorder_fabric_photos; sortOrder 0 is the main catalog photo
+      description: >
+        Requires the complete current photo ID set. Stale or partial sets return 409 photo_order_conflict
+        without partial writes. Contiguous sortOrder values starting at 0 are required.
       requestBody:
         required: true
         content:

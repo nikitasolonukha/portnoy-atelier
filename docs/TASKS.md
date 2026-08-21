@@ -75,6 +75,18 @@
 - [x] Restore shell `aria-label="Текущий пользователь: …"`; supabase login helper filters visible; role-matrix `Добавить`; stage-one status chip.
 - [x] Map RLS-blocked fabric delete (in use) to `fabric_in_use` 409 instead of false 404.
 
+## Stage 1 final freeze
+
+Acceptance criteria:
+- [x] Unified draft photo list: existing + pending share main/up/down/delete before first save.
+- [x] Max 12 photos counted across draft (existing not removed + pending).
+- [x] Mixed new/existing order is source of truth; upload response IDs map temp photos; PATCH writes final contiguous `sort_order`.
+- [x] Atomic `reorder_fabric_photos` RPC + stale full-set conflict `photo_order_conflict` (409); employee API reorder 403.
+- [x] Global unsaved guard: beforeunload, form Back, sidebar/internal links dialog; browser Back uses native confirm.
+- [x] Save→configurator only after fabric + assets + order + hydrate success; failed save keeps dirty.
+- [x] Supabase E2E covers create/main/mixed reorder persistence and role matrix on PATCH assets.
+- [x] pgTAP covers duplicate/missing/foreign/texture conflict and no partial write on failure.
+
 ## Stage 1 spec compliance gaps
 
 Acceptance criteria:
@@ -87,11 +99,12 @@ Acceptance criteria:
 - [x] Fabric form: «Сохранить и открыть в конфигураторе» only after successful save/assets.
 - [x] Fabric form unsaved guard (dialog + beforeunload); no prompt when clean.
 - [x] `docs/PROJECT_SPEC.md` documents technical 3D Stage 1 without claiming modular mesh swaps.
+- [x] PR #9 CI evidence: quality + supabase + Vercel green on merge (`b4fdb0a`).
 
 ## External activation checklist
 
 - [x] `fix/final-stage-one-hardening` pushed; draft PR [#7](https://github.com/nikitasolonukha/portnoy-atelier/pull/7) targets `main`.
-- [ ] Obtain green GitHub Actions evidence for quality, demo E2E and Supabase jobs on the compliance PR.
+- [x] Obtain green GitHub Actions evidence for quality and Supabase jobs on compliance PR #9.
 - [ ] Create/link staging Supabase and populate secrets outside git.
 - [ ] Apply migrations and repeat admin/tailor/employee browser + direct RLS matrix on staging.
 - [ ] Create staging deployment and attach staging URL.

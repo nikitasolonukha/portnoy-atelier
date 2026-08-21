@@ -25,6 +25,7 @@ Repository использует стабильную сортировку `updat
 - `GET/PATCH/DELETE /fabrics/{fabricId}`
 - `POST /fabrics/{fabricId}/assets`
 - `DELETE /fabrics/{fabricId}/assets/{assetId}`
+- `PATCH /fabrics/{fabricId}/assets` — atomic photo reorder (`reorder_fabric_photos`); `409 photo_order_conflict` when the client photo set is stale; `403` for employee
 - `POST /fabric-imports`
 - `GET/POST /configurations`
 - `GET/PATCH/DELETE /configurations/{configurationId}`
