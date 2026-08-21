@@ -12,6 +12,8 @@ For a new fabric, the create schema may apply documented defaults. For an existi
 
 Supabase records the owner, strategy-aware content hash, terminal `created/updated/skipped/failed` counts and completion audit event. Demo mode implements the same browser-visible semantics locally without pretending to persist server-side import history.
 
+Mapped `imageUrl` / «фото» on Supabase downloads a public `https` image (JPEG/PNG/WebP, ≤10 MB), validates the signature, and stores it in private `fabric-assets` Storage. Private/link-local hosts are rejected (SSRF guard). Relative `/fabrics/...` paths remain demo-only; on Supabase they fail the row. If photo attach fails after create, the fabric is removed (or archived when delete is not permitted) so the row counts as failed.
+
 ## Consequences
 
 - Re-importing identical rows with the same strategy is rejected after successful completion.

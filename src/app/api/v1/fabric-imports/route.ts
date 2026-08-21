@@ -16,7 +16,13 @@ export async function POST(request: NextRequest) {
     const contentSha256 = createHash("sha256").update(JSON.stringify({ strategy: input.strategy, rows: input.rows })).digest("hex");
     if (await repositories.imports.findCompleted(actor.id, contentSha256)) throw new ApiProblem("import_already_completed", "Этот файл уже был успешно импортирован", 409);
     const importId = await repositories.imports.start({ actorId: actor.id, filename: input.filename, strategy: input.strategy, total: input.rows.length, contentSha256 });
-    const result = await executeFabricImport(input.rows, input.strategy, repositories.fabrics, actor.id);
+    const result = await executeFabricImport(
+      input.rows,
+      input.strategy,
+      repositories.fabrics,
+      actor.id,
+      repositories.assets ? { assets: repositories.assets } : undefined,
+    );
     const valid = result.created + result.updated + result.skipped;
     await repositories.imports.finish(importId, { total: input.rows.length, valid, invalid: result.failed, created: result.created, updated: result.updated, skipped: result.skipped, failed: result.failed });
     return NextResponse.json(apiSuccess(result));
