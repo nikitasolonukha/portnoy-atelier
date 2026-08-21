@@ -24,6 +24,7 @@ describe("remote image SSRF guards", () => {
     expect(isBlockedIpAddress("172.16.5.5")).toBe(true);
     expect(isBlockedIpAddress("192.168.0.10")).toBe(true);
     expect(isBlockedIpAddress("169.254.1.1")).toBe(true);
+    expect(isBlockedIpAddress("100.64.1.1")).toBe(true);
     expect(isBlockedIpAddress("::1")).toBe(true);
     expect(isBlockedIpAddress("8.8.8.8")).toBe(false);
   });

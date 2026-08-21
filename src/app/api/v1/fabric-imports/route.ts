@@ -7,6 +7,9 @@ import { toErrorResponse } from "@/interface/http/respond";
 import { ApiProblem, apiSuccess } from "@/lib/api-response";
 import { importRequestSchema } from "@/schemas/import";
 
+/** Photo URL downloads make import slower than plain rows; keep under Vercel Pro/hobby limits. */
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const actor = await requireActor();
