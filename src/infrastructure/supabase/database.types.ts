@@ -393,6 +393,25 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       has_active_profile: { Args: never; Returns: boolean }
+      reorder_fabric_photos: {
+        Args: { p_fabric_id: string; p_ordered_ids: string[] }
+        Returns: {
+          created_at: string
+          fabric_id: string
+          id: string
+          mime_type: string
+          original_filename: string
+          sort_order: number
+          storage_path: string
+          type: Database["public"]["Enums"]["fabric_asset_type"]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "fabric_assets"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }

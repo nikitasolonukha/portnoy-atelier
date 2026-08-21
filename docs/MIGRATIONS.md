@@ -26,3 +26,4 @@ Supabase migrations forward-only. Применённые файлы не ред�
 - `202608190002_grant_service_role_fixture_operations.sql`: выдаёт только узкие права, необходимые локальному E2E fixture setup/cleanup; user flows продолжают работать с обычным JWT и RLS.
 - `202608190003_fix_audit_trigger_table_branching.sql`: устраняет обращение общего audit-trigger к полям другой таблицы и безопасно разделяет fabric/configuration events.
 - `202608190004_harden_active_profile_rls.sql`: централизует проверку активного профиля и запрещает деактивированным admin/tailor/employee прямой доступ к business tables и private Storage; rollback выполняется только новой forward-fix migration.
+- `202608210001_atomic_fabric_photo_reorder.sql`: добавляет `reorder_fabric_photos(uuid, uuid[])` для атомарного contiguous `sort_order` фотографий с conflict на stale/partial set; SECURITY INVOKER + RLS; rollback — новая forward-fix migration, удаляющая функцию после того как API перестанет её вызывать.
