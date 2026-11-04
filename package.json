@@ -47,7 +47,7 @@
     "tailwind-merge": "^3.3.1",
     "three": "^0.185.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
-    "zod": "^4.1.11",
+    "zod": "^4.6.6",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
